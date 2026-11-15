@@ -5,6 +5,7 @@
         xmlns:views="using:MediaRenamer.Views"
         x:Class="MediaRenamer.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/icon.ico"
         Width="1600" Height="800" MinWidth="900" MinHeight="400"
         WindowStartupLocation="CenterScreen">
 

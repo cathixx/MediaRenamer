@@ -3,6 +3,7 @@
         xmlns:res="using:MediaRenamer.Resources"
         x:Class="MediaRenamer.Views.MessageWindow"
         Title="{x:Static res:Strings.Error}"
+        Icon="/Assets/icon.ico"
         Width="520" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner">
   <DockPanel Margin="16">

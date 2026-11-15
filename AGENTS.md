@@ -47,6 +47,10 @@ Notes for AI agents working in this repository.
   a public GitHub release with the next version number (changes only to `*.md`, `LICENSE`, `.idea/` or `.github/`
   don't create a release; use "Run workflow" to release manually).
 - Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
+- **Application icon:** `src/MediaRenamer/Assets/icon.svg`, `icon.ico` and `icon-256.png` are generated from the
+  vector description in `tests/MediaRenamer.Tests/IconGenerator.cs`; never edit them directly. After changing the icon:
+  `SCREENSHOT_DIR=/tmp/shots dotnet test --project tests/MediaRenamer.Tests -- --explicit only --filter-class *IconGenerator`
+  and check `/tmp/shots/icon-preview.png`.
 - **Checking the UI without a display:** `ScreenshotTests` renders the windows headless (Avalonia.Headless with Skia)
   with test data and saves PNGs: `SCREENSHOT_DIR=/tmp/shots dotnet test --project tests/MediaRenamer.Tests -- --explicit only`,
   then look at the images. Do this after every visible change of the UI.

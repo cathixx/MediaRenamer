@@ -1,5 +1,7 @@
 # MediaRenamer
 
+<img src="src/MediaRenamer/Assets/icon.svg" alt="" width="96" align="right">
+
 Cross-platform desktop tool (Windows, Linux, macOS) that renames locally stored TV show episodes consistently,
 using episode titles from [TheMovieDB](https://www.themoviedb.org/).
 
