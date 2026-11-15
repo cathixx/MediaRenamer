@@ -8,10 +8,18 @@ public class TitleSanitizerTests
     // examples from the requirements
     [InlineData("AC/DC", "AC_DC")]
     [InlineData("Say \"Hi\"", "Say 'Hi'")]
-    [InlineData("Stop!", "Stop_")]
+    [InlineData("Stop!", "Stop")]
     [InlineData("Teil 1: Der Anfang", "Teil 1 Der Anfang")]
     [InlineData("Was nun?", "Was nun")]
     [InlineData("Dr. House & Co.", "Dr. House & Co.")]
+    // exclamation marks: removed at the end, otherwise replaced
+    [InlineData("Go! Go!", "Go_ Go")]
+    [InlineData("Help!!!", "Help")]
+    [InlineData("Help ! ! ", "Help")]
+    [InlineData("Really?!", "Really")]
+    [InlineData("Really!?", "Really")]
+    [InlineData("Yes!!! No", "Yes___ No")]
+    [InlineData("!!!", "")]
     // all kinds of quotation marks
     [InlineData("It's", "It's")]
     [InlineData("It’s ‘a’ “b” „c“ «d» ‹e› ‚f‘", "It's 'a' 'b' 'c' 'd' 'e' 'f'")]

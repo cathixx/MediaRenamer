@@ -28,14 +28,16 @@ public static class TitleSanitizer
     /// <item>All kinds of quotation marks become <c>'</c>.</item>
     /// <item><c>...</c> becomes <c>…</c>, all kinds of dashes (en dash <c>–</c>, em dash <c>—</c>, ...) become
     /// <c>-</c>.</item>
-    /// <item><c>:</c> and <c>?</c> are removed.</item>
+    /// <item><c>:</c> and <c>?</c> are removed, as well as <c>!</c> at the end (also several, and with spaces in
+    /// between).</item>
     /// <item>Letters (including umlauts, accents and <c>ß</c>), digits and the punctuation <c>- . , ' &amp; ( ) …</c>
-    /// are kept, every other character becomes <c>_</c>, including the characters forbidden on Windows and <c>!</c>.</item>
+    /// are kept, every other character becomes <c>_</c>, including the characters forbidden on Windows and <c>!</c> within
+    /// the title.</item>
     /// <item>Every whitespace character (tab, no-break space, ...) becomes a space, consecutive spaces become one, and
     /// spaces at the start and end are removed.</item>
     /// </list>
     /// </summary>
-    /// <example><c>AC/DC</c> → <c>AC_DC</c>, <c>Say "Hi"</c> → <c>Say 'Hi'</c>, <c>Stop!</c> → <c>Stop_</c>,
+    /// <example><c>AC/DC</c> → <c>AC_DC</c>, <c>Say "Hi"</c> → <c>Say 'Hi'</c>, <c>Stop!</c> → <c>Stop</c>, <c>Go! Go!</c> → <c>Go_ Go</c>,
     /// <c>Part 1: The Beginning</c> → <c>Part 1 The Beginning</c>, <c>What now?</c> → <c>What now</c>.</example>
     public static string Sanitize(string title)
     {
@@ -63,6 +65,7 @@ public static class TitleSanitizer
             .Replace("...", "…", StringComparison.Ordinal)
             .Replace(":", string.Empty, StringComparison.Ordinal)
             .Replace("?", string.Empty, StringComparison.Ordinal);
+        text = RemoveTrailingExclamationMarks(text);
 
         var result = new StringBuilder(text.Length);
         foreach (var rune in text.EnumerateRunes())
@@ -86,6 +89,18 @@ public static class TitleSanitizer
         }
 
         return result.ToString().TrimEnd(' ');
+    }
+
+    private static string RemoveTrailingExclamationMarks(string text)
+    {
+        var end = text.Length;
+        while (end > 0 && (text[end - 1] == '!' || char.IsWhiteSpace(text[end - 1])))
+        {
+            end--;
+        }
+
+        // only shorten if there was an exclamation mark, trailing spaces alone are removed at the end anyway
+        return text.AsSpan(end).Contains('!') ? text[..end] : text;
     }
 
     private static bool IsQuotationMark(Rune rune) =>
