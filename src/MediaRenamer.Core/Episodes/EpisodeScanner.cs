@@ -35,7 +35,8 @@ public static class EpisodeScanner
     /// <remarks>
     /// Files without a recognized episode number get the lowest free episode number of their season folder, in the
     /// order of their file names (ordinal, i.e. upper case before lower case). They fill the gaps between the
-    /// recognized episodes. Both numbers of a double episode are taken.
+    /// recognized episodes. Both numbers of a double episode are taken. Files with the recognized episode number 0
+    /// (e.g. <c>S11E00 - Christmas special.mkv</c>) are specials; they are ignored and never renamed (D-10).
     /// </remarks>
     public static IReadOnlyList<EpisodeFile> Scan(IEnumerable<SeasonFolder> seasons)
     {
@@ -53,6 +54,12 @@ public static class EpisodeScanner
             {
                 if (EpisodeNumberParser.Parse(Path.GetFileName(file), season.Number) is { } episodes)
                 {
+                    if (episodes.First == 0)
+                    {
+                        continue;
+                    }
+
+
                     taken.UnionWith(episodes.All);
                     files.Add((file, season.Number, episodes, true));
                 }

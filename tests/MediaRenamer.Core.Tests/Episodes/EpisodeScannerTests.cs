@@ -33,6 +33,18 @@ public sealed class EpisodeScannerTests : IDisposable
     }
 
     [Fact]
+    public void IgnoresSpecialsWithEpisodeNumberZero()
+    {
+        var season = Season(11, "S11E00 - Weihnachtsspecial 2017 - Aus der Zeit gefallen.mkv", "s11e00e01.mkv",
+            "Show 11x00.mkv", "S11E01.mkv", "b.mkv");
+
+        var files = EpisodeScanner.Scan([season]);
+
+        Assert.Equal([("S11E01", 1, true), ("b", 2, false)],
+            files.Select(f => (f.Name, f.Episodes.First, f.IsRecognized)));
+    }
+
+    [Fact]
     public void KeepsNameAndExtension()
     {
         var season = Season(1, "Show.S01E02.Title.MKV");

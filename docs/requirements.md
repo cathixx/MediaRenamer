@@ -58,6 +58,7 @@ one or more selected season folders (E-2).
 | D-2 | All other files (subtitles, `.nfo`, images, ...) are ignored and never renamed. |
 | D-3 | The "old file name" shown is the file name without the extension (everything before the last dot). |
 | D-4 | The season number of a file is always the one of its folder, never the one in the file name. |
+| D-10 | **Specials:** files whose recognized (first) episode number is 0, e.g. `S11E00 - Christmas special 2017.mkv`, are ignored: they are neither shown nor renamed, and they do not take an episode number (D-5). |
 
 ### 3.2 Episode number in the file name
 
