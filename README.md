@@ -4,11 +4,47 @@ Cross-platform desktop tool (Windows, Linux, macOS) that renames locally stored 
 using episode titles from [TheMovieDB](https://www.themoviedb.org/).
 
 This is a re-implementation of a JavaFX application in C# / .NET with [Avalonia UI](https://avaloniaui.net/).
-Usage: start the application with the show folder as argument (e.g. via the Windows Explorer "Send to" menu) or
-choose the folder in the application. It searches the show on TheMovieDB, shows the proposed names and renames the
-selected files with "Rename".
-
 The behavior is specified in [docs/requirements.md](docs/requirements.md).
+
+## Usage
+
+The video files of a show are expected in season folders, e.g.:
+
+```
+Eureka/
+  Staffel 01/          (or "Season 01", any "<word> <number>")
+    S01E01.mkv
+    eureka.s01e02.mkv
+  Staffel 02/
+    ...
+  Staffel 00/          (specials: ignored, never renamed)
+```
+
+1. Start the application with the show folder, or choose the folder with "Choose folder…".
+   To process only some seasons, pass one or more season folders instead.
+2. The application searches the show on TheMovieDB by the folder name and proposes new names like
+   `S01E02 - Many Happy Returns.mkv`. If necessary, change the search term, the selected show or the language,
+   and deselect files that should not be renamed.
+3. Click "Rename". Existing files are never overwritten.
+
+Download the executable from the [releases](https://github.com/cathixx/MediaRenamer/releases), see
+[Releases](#releases) for the files.
+
+### Windows: "Send to" menu
+
+The most convenient way on Windows is the "Send to" menu of the Explorer:
+
+1. Press <kbd>Win</kbd>+<kbd>R</kbd>, enter `shell:sendto` and press Enter. The "SendTo" folder opens.
+2. Create a shortcut to `MediaRenamer.exe` in this folder (e.g. drag the exe into the folder with the right mouse
+   button and choose "Create shortcuts here"), and rename it to `MediaRenamer`.
+3. In the Explorer, right-click a show folder (or select several season folders and right-click them) and choose
+   "Send to" → "MediaRenamer". On Windows 11 the "Send to" menu is under "Show more options".
+
+### Linux and macOS
+
+The application takes the folders as command line arguments, so file managers can start it the same way, e.g. with
+a script in `~/.local/share/nautilus/scripts/` (GNOME Files) or a Quick Action created with Automator (macOS
+Finder) that runs `MediaRenamer "$@"`.
 
 ## Development
 

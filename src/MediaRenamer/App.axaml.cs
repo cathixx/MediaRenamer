@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using MediaRenamer.Core.Tmdb;
 using MediaRenamer.Resources;
 using MediaRenamer.ViewModels;
@@ -33,11 +34,47 @@ public partial class App : Application
                     new TmdbService(new TmdbClient(new HttpClient(), apiKey)),
                     new DialogService(window));
                 window.DataContext = viewModel;
+                HandleUnexpectedErrors(viewModel);
                 window.Opened += async (_, _) => await viewModel.OpenAsync(Program.FolderArguments);
                 desktop.MainWindow = window;
             }
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    /// Fallback for errors that are not handled where they occur (e.g. in event handlers): the error is shown and the
+    /// application continues instead of crashing (section 8).
+    /// </summary>
+    private static void HandleUnexpectedErrors(MainWindowViewModel viewModel)
+    {
+        var showing = false;
+        Dispatcher.UIThread.UnhandledException += async (_, e) =>
+        {
+            e.Handled = true;
+            if (showing)
+            {
+                Console.Error.WriteLine(e.Exception); // one dialog at a time
+                return;
+            }
+
+            showing = true;
+            try
+            {
+                await viewModel.ShowUnexpectedErrorAsync(e.Exception);
+            }
+            finally
+            {
+                showing = false;
+            }
+        };
+
+        // errors of background tasks nobody waits for: only log them
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Console.Error.WriteLine(e.Exception);
+            e.SetObserved();
+        };
     }
 }

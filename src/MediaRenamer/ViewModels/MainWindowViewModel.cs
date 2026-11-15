@@ -141,6 +141,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 FolderMessage = Strings.FolderReadFailed(e.Message);
                 return;
             }
+            catch (Exception e)
+            {
+                await ShowUnexpectedErrorAsync(e);
+                return;
+            }
 
             ShowPath = result.ShowPath;
             FolderMessage = FolderMessageFor(result);
@@ -452,7 +457,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         RetryCommand.NotifyCanExecuteChanged();
     }
 
-    private Task ShowUnexpectedErrorAsync(Exception e)
+    /// <summary>Shows an unexpected error; the application continues (section 8).</summary>
+    internal Task ShowUnexpectedErrorAsync(Exception e)
     {
         Console.Error.WriteLine(e);
         return _dialogs.ShowErrorAsync(Strings.UnexpectedError, e.Message);

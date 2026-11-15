@@ -107,6 +107,18 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task Open_UnexpectedError_IsShownAndTheApplicationContinues()
+    {
+        var vm = CreateViewModel();
+
+        await vm.OpenAsync(["invalid\0path"]); // a null character is not allowed in paths
+
+        var error = Assert.Single(_dialogs.Errors);
+        Assert.Equal(Resources.Strings.UnexpectedError, error.Header);
+        Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
     public async Task Open_SeasonFolderMode_ReportsIgnoredFolders()
     {
         var season = _temp.Folder("Eureka", "Staffel 01");
