@@ -15,7 +15,15 @@
     <DebugType>embedded</DebugType>
   </PropertyGroup>
 
-  <!-- Size of the self-contained executable (win-x64: 86 MB -> 19 MB):
+  <!-- Some packages (e.g. SkiaSharp, HarfBuzzSharp on Windows) ship debug symbols of their native libraries, which
+       would be published next to the executable (about 100 MB). They are not needed by users. -->
+  <Target Name="RemovePackageDebugSymbolsFromPublish" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Size of the self-contained executable (win-x64: 86 MB -> 21 MB):
        - trimming removes unused code of the bundled .NET runtime and libraries. Code that is only reached via
          reflection may be removed as well, so trim warnings must be treated as errors and fixed, not ignored.
        - compression shrinks the bundled assemblies; they are decompressed in memory at startup. -->

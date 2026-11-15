@@ -29,8 +29,9 @@ Notes for AI agents working in this repository.
   (other runtime IDs: `linux-x64`, `osx-x64`, `osx-arm64`).
 - Publishing trims and compresses the executable (`PublishTrimmed`, `EnableCompressionInSingleFile` in the csproj).
   Trim warnings are errors: fix them (e.g. avoid reflection, use compiled bindings), never suppress them blindly.
-- On macOS the native libraries (`*.dylib`) are not bundled into the single file but placed next to it;
-  the intended macOS deliverable is an `.app` bundle (not implemented yet).
+- The result of publishing is exactly one file on every platform. Debug symbols of native libraries shipped by
+  packages are removed from the publish output (target `RemovePackageDebugSymbolsFromPublish` in the csproj).
+  A macOS `.app` bundle is not implemented yet.
 - CI: `.github/workflows/build.yml` publishes the executable for `win-x64`, `linux-x64`, `osx-arm64` and `osx-x64`
   on pushes to `main` and on pull requests and attaches them as artifacts. There is no release workflow yet.
 - Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
@@ -60,6 +61,9 @@ Notes for AI agents working in this repository.
 - **Linear history, no merge commits:** PRs are taken over by fast-forward
   (`git fetch && git merge --ff-only origin/<pr-branch>`, then push). If a fast-forward is not possible,
   rebase the PR branch first.
+  Dependabot only rebases its PRs on conflicts, and for grouped multi-ecosystem PRs it did not react to
+  `@dependabot rebase`. In that case merge the PR on GitHub with **"Squash and merge"**: GitHub signs that commit,
+  whereas commits created by "Rebase and merge" (and "Update with rebase") are unsigned.
 - **Signatures:** All commits must be signed (`commit.gpgsign=true`).
 - **Setting up the GPG key in the sandbox:** In the sandbox container `commit.gpgsign=true` is set with
   `user.signingkey=D6FC8D086220A70A`, but the key is missing from the (freshly created) keyring. The private key is
