@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Styling;
 using MediaRenamer.Core.Updates;
 
 namespace MediaRenamer;
@@ -7,12 +8,16 @@ namespace MediaRenamer;
 internal static class Program
 {
     private const string LanguageOption = "--lang=";
+    private const string ThemeOption = "--theme=";
 
     /// <summary>The command line arguments (without the options of an update).</summary>
     public static IReadOnlyList<string> Arguments { get; private set; } = [];
 
     /// <summary>Command line arguments without options, i.e. the folder paths (e.g. from the "Send to" menu).</summary>
     public static IReadOnlyList<string> FolderArguments { get; private set; } = [];
+
+    /// <summary>Theme from <c>--theme=light|dark</c>, or <c>null</c> to follow the operating system.</summary>
+    public static ThemeVariant? Theme { get; private set; }
 
     /// <summary>An error while completing an update, shown after the start.</summary>
     public static string? StartupError { get; private set; }
@@ -48,6 +53,7 @@ internal static class Program
             CultureInfo.CurrentUICulture = culture;
         }
 
+        Theme = ParseTheme(Arguments);
         FolderArguments = Arguments.Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToArray();
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime([.. Arguments]);
     }
@@ -70,6 +76,22 @@ internal static class Program
             StartupError = Resources.Strings.UpdateFailed(e.Message, UpdateService.ReleasesUrl);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Theme from the option <c>--theme=light</c> or <c>--theme=dark</c> (case-insensitive), e.g. for testing; any other
+    /// value or no option: <c>null</c>, i.e. the light or dark mode of the operating system.
+    /// </summary>
+    internal static ThemeVariant? ParseTheme(IEnumerable<string> arguments)
+    {
+        var value = arguments.LastOrDefault(a => a.StartsWith(ThemeOption, StringComparison.OrdinalIgnoreCase))?
+            [ThemeOption.Length..];
+        return value?.ToLowerInvariant() switch
+        {
+            "light" => ThemeVariant.Light,
+            "dark" => ThemeVariant.Dark,
+            _ => null,
+        };
     }
 
     public static AppBuilder BuildAvaloniaApp() =>

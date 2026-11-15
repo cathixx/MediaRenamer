@@ -62,8 +62,8 @@ dotnet build
 # run, optionally with folder paths as arguments
 dotnet run --project src/MediaRenamer -- "C:\Shows\Doctor Who"
 
-# run with a specific UI language
-dotnet run --project src/MediaRenamer -- --lang=de
+# run with a specific UI language and theme (light or dark, default: like the operating system)
+dotnet run --project src/MediaRenamer -- --lang=de --theme=dark
 
 # run the tests
 dotnet test

@@ -14,7 +14,14 @@ namespace MediaRenamer;
 
 public partial class App : Application
 {
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        if (Program.Theme is { } theme)
+        {
+            RequestedThemeVariant = theme; // --theme=light|dark, otherwise the mode of the operating system
+        }
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {
