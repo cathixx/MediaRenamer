@@ -21,6 +21,8 @@ public static class Strings
     public static string ExampleCheckbox => Get(nameof(ExampleCheckbox));
     public static string ClickMe => Get(nameof(ClickMe));
     public static string NoFoldersPassed => Get(nameof(NoFoldersPassed));
+    public static string TmdbApiKeyAvailable => Get(nameof(TmdbApiKeyAvailable));
+    public static string TmdbApiKeyMissing => Get(nameof(TmdbApiKeyMissing));
 
     public static string Arguments(string value) => string.Format(Get("ArgumentsFormat"), value);
     public static string SearchedFor(string value) => string.Format(Get("SearchedForFormat"), value);

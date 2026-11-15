@@ -35,6 +35,20 @@ Project structure:
 | `src/MediaRenamer` | Avalonia desktop application |
 | `tests/MediaRenamer.Core.Tests` | Tests of the business logic (xUnit v3) |
 
+## TMDB API key
+
+The application uses [TheMovieDB](https://www.themoviedb.org/) and needs a TMDB API key (v3).
+The key is embedded into the executable at build time and is taken from
+
+- the environment variable `TMDB_API_KEY`, or
+- a `.env` file in the repository root (copy `.env.example` to `.env` and fill in your key).
+
+Without a key the build still works, but the application then requires the environment variable `TMDB_API_KEY` at
+runtime. The environment variable always takes precedence, so you can also use your own key with a released executable.
+
+Tests against the real TMDB API are not run by default; run them with `dotnet test -- --explicit only` (needs the
+environment variable `TMDB_API_KEY`).
+
 ## Localization
 
 UI texts live in `src/MediaRenamer/Resources/Strings*.resx`: `Strings.resx` is the English default, `Strings.de.resx`

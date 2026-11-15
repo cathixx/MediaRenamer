@@ -93,10 +93,23 @@ jobs:
         if: matrix.test
         run: dotnet test --configuration Release
 
+      - name: Check API key
+        # releases must contain the API key; PR builds (e.g. from forks or Dependabot) don't get secrets
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          if [ -z "$TMDB_API_KEY" ]; then
+            echo "::error::Repository secret TMDB_API_KEY is missing"
+            exit 1
+          fi
+
       - name: Publish
         shell: bash
         env:
           TAG: ${{ needs.version.outputs.tag }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}  # embedded into the executable, see EmbeddedTmdbApiKey.targets
         run: |
           version_args=()
           if [ -n "$TAG" ]; then

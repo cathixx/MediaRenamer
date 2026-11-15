@@ -263,7 +263,7 @@ None.
 |---|---|---|
 | 2 Start and input | logic done, UI missing | `MediaRenamer.Core/Folders` |
 | 3 Video files and episode numbers | done | `MediaRenamer.Core/Episodes` |
-| 4 TheMovieDB | missing | |
+| 4 TheMovieDB | logic done (T-3 to T-8, T-10 to T-13, T-16, T-17, T-20 to T-22), UI missing (T-1, T-2 debounce, T-9, T-14, T-15, T-18, T-19, T-23) | `MediaRenamer.Core/Tmdb`, key embedding: `MediaRenamer/EmbeddedTmdbApiKey.targets` |
 | 5 New file name | done | `MediaRenamer.Core/Naming` |
 | 6 User interface | missing (hello world) | `MediaRenamer` |
 | 7 Renaming | logic for R-1, R-2 and R-5 done, the rest belongs to the UI (missing) | `MediaRenamer.Core/Renaming` |

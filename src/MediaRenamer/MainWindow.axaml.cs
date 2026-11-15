@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using MediaRenamer.Core.Tmdb;
 using MediaRenamer.Resources;
 
 namespace MediaRenamer;
@@ -12,7 +13,11 @@ public partial class MainWindow : Window
         InitializeComponent();
         var folders = Program.FolderArguments;
         var status = folders.Count == 0 ? Strings.NoFoldersPassed : Strings.Arguments(string.Join(", ", folders));
-        StatusText.Text = $"{status}  |  {Strings.CurrentLanguage(CultureInfo.CurrentUICulture.Name)}";
+        var apiKey = TmdbApiKey.Resolve(Environment.GetEnvironmentVariable(TmdbApiKey.EnvironmentVariable),
+            EmbeddedTmdbApiKey.Value);
+        var apiKeyStatus = apiKey is null ? Strings.TmdbApiKeyMissing : Strings.TmdbApiKeyAvailable;
+        StatusText.Text =
+            $"{status}  |  {Strings.CurrentLanguage(CultureInfo.CurrentUICulture.Name)}  |  {apiKeyStatus}";
     }
 
     private void OnHelloClick(object? sender, RoutedEventArgs e) =>

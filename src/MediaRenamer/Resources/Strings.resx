@@ -12,4 +12,6 @@
   <data name="ArgumentsFormat" xml:space="preserve"><value>Arguments: {0}</value></data>
   <data name="SearchedForFormat" xml:space="preserve"><value>You searched for: "{0}"</value></data>
   <data name="CurrentLanguageFormat" xml:space="preserve"><value>Language: {0}</value></data>
+  <data name="TmdbApiKeyAvailable" xml:space="preserve"><value>TMDB API key: available</value></data>
+  <data name="TmdbApiKeyMissing" xml:space="preserve"><value>TMDB API key: missing</value></data>
 </root>

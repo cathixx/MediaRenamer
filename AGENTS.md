@@ -51,7 +51,13 @@ Notes for AI agents working in this repository.
 - In the sandbox the .NET SDK is installed in `~/.dotnet` but is not on the `PATH`:
   `export PATH=$HOME/.dotnet:$PATH`. There is no display, so the UI can be built but not started there.
 - All text files use LF line endings.
-- TMDB API key: locally in `.env` (ignored by git, template `.env.example`). Never commit the key and never print it.
+- TMDB API key: locally in `.env` (ignored by git, template `.env.example`), in CI the repository secret
+  `TMDB_API_KEY`. `src/MediaRenamer/EmbeddedTmdbApiKey.targets` embeds it at build time into the generated class
+  `EmbeddedTmdbApiKey` (in `obj/`); at runtime the environment variable takes precedence. Never commit the key and
+  never print it (also not from the generated file).
+- Tests against the real TMDB API are marked `Explicit` and need the key in the environment:
+  `set -a; . ./.env; set +a; dotnet test -- --explicit only`. The sandbox needs network access to
+  `api.themoviedb.org` and `image.tmdb.org`.
 
 ## Git
 

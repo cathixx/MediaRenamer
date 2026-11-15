@@ -39,4 +39,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MediaRenamer.Core\MediaRenamer.Core.csproj" />
   </ItemGroup>
+
+  <Import Project="EmbeddedTmdbApiKey.targets" />
 </Project>
