@@ -58,10 +58,11 @@ public sealed record ShowFolderResult(
 /// "Send to" menu of the Windows Explorer, or from a folder chosen in the application.
 /// </summary>
 /// <remarks>
-/// <para><b>Show folder mode:</b> the name of the first path does not start with
-/// <see cref="SeasonFolderName.SeasonKeyword"/>. It is the show folder; all its direct sub folders whose names match
+/// <para><b>Show folder mode:</b> the name of the first path does not start with one of the
+/// <see cref="SeasonFolderName.SeasonKeywords"/>. It is the show folder; all its direct sub folders whose names match
 /// the season folder pattern are the seasons. Further paths are ignored.</para>
-/// <para><b>Season folder mode:</b> the name of the first path starts with <see cref="SeasonFolderName.SeasonKeyword"/>.
+/// <para><b>Season folder mode:</b> the name of the first path starts with one of the
+/// <see cref="SeasonFolderName.SeasonKeywords"/>.
 /// All paths are season folders and the show folder is the parent of the first one. This allows processing single
 /// seasons of a show. Paths that are not season folders of that show are ignored and reported.</para>
 /// <para>In both modes the specials folder (season 0) is skipped.</para>

@@ -7,10 +7,10 @@ namespace MediaRenamer.Core.Folders;
 public static partial class SeasonFolderName
 {
     /// <summary>
-    /// A name starting with this word marks a season folder when it is passed directly to the application
-    /// (season folder mode, see <see cref="ShowFolderResolver"/>). Case-sensitive.
+    /// A name starting with one of these words, not followed by another letter, marks a season folder when it is passed
+    /// directly to the application (season folder mode, see <see cref="ShowFolderResolver"/>). Case-sensitive.
     /// </summary>
-    public const string SeasonKeyword = "Staffel";
+    public static readonly IReadOnlyList<string> SeasonKeywords = ["Staffel", "Season"];
 
     /// <summary>Season number of the specials folder. Its files are never shown or renamed.</summary>
     public const int SpecialsSeason = 0;
@@ -35,7 +35,13 @@ public static partial class SeasonFolderName
         return false;
     }
 
-    /// <summary>Returns whether a folder passed to the application selects the season folder mode.</summary>
+    /// <summary>
+    /// Returns whether a folder passed to the application selects the season folder mode: its name starts with one of
+    /// the <see cref="SeasonKeywords"/>, not followed by another letter (<c>Season 1</c>, <c>Staffel01</c>, but not
+    /// <c>Seasons of Love</c>).
+    /// </summary>
     public static bool StartsWithSeasonKeyword(string folderName) =>
-        folderName.StartsWith(SeasonKeyword, StringComparison.Ordinal);
+        SeasonKeywords.Any(keyword =>
+            folderName.StartsWith(keyword, StringComparison.Ordinal)
+            && (folderName.Length == keyword.Length || !char.IsLetter(folderName[keyword.Length])));
 }

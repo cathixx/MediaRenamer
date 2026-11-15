@@ -20,7 +20,8 @@ public class TitleSanitizerTests
     [InlineData("Wait... what", "Wait… what")]
     [InlineData("Wait…", "Wait…")]
     [InlineData("A – B", "A - B")]
-    [InlineData("A — B", "A _ B")] // em dash is not an allowed character
+    [InlineData("A — B", "A - B")] // em dash
+    [InlineData("Non‑breaking‐hyphen", "Non-breaking-hyphen")]
     // kept punctuation
     [InlineData("A-B.C,D'E&F(G)H…", "A-B.C,D'E&F(G)H…")]
     // characters forbidden on Windows and other special characters

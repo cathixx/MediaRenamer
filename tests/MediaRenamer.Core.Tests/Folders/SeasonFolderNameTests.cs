@@ -33,9 +33,14 @@ public class SeasonFolderNameTests
     [Theory]
     [InlineData("Staffel 01", true)]
     [InlineData("Staffel01", true)]
+    [InlineData("Season 1", true)]
+    [InlineData("Season01", true)]
     [InlineData("staffel 01", false)] // case-sensitive
-    [InlineData("Season 1", false)]
+    [InlineData("season 1", false)]
     [InlineData("Doctor Who", false)]
+    [InlineData("Seasons of Love", false)] // keyword followed by another letter
+    [InlineData("Staffellauf", false)]
+    [InlineData("Staffel", true)]
     public void SeasonKeywordSelectsSeasonFolderMode(string name, bool expected)
     {
         Assert.Equal(expected, SeasonFolderName.StartsWithSeasonKeyword(name));

@@ -16,13 +16,17 @@ public static class EpisodeNameBuilder
     /// </summary>
     /// <remarks>
     /// Season and episode numbers have at least two digits, larger numbers are kept completely (<c>S12E123</c>).
-    /// Dots at the start and end of the title are removed (<c>...and then?</c> → <c>and then</c>), unless less than two
-    /// other characters remain. Then the title is cleaned with <see cref="TitleSanitizer.Sanitize"/>.
+    /// Dots at the start and end of the title are removed (<c>...and then?</c> → <c>and then</c>), unless fewer than two
+    /// characters would remain. Then the title is cleaned with <see cref="TitleSanitizer.Sanitize"/>. Finally dots at
+    /// the end are removed in any case, so the name never ends with a dot followed by the extension's dot
+    /// (<c>A.?</c> → <c>A</c>).
     /// </remarks>
     public static string Build(int season, EpisodeNumbers episodes, string? title)
     {
         var code = EpisodeCode(season, episodes);
-        var cleanTitle = title is null ? string.Empty : TitleSanitizer.Sanitize(TrimDots(title));
+        var cleanTitle = title is null
+            ? string.Empty
+            : TitleSanitizer.Sanitize(TrimDots(title)).TrimEnd('.', ' ');
         return cleanTitle.Length == 0 ? code : code + TitleSeparator + cleanTitle;
     }
 

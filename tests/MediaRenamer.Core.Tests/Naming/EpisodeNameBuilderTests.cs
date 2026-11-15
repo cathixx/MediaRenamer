@@ -37,9 +37,11 @@ public class EpisodeNameBuilderTests
     [InlineData("...und dann?", "S01E02 - und dann")]
     [InlineData("Ende.", "S01E02 - Ende")]
     [InlineData("Dr. House & Co.", "S01E02 - Dr. House & Co")]
-    [InlineData("...", "S01E02 - …")]   // fewer than two characters would remain: unchanged
-    [InlineData("..a..", "S01E02 - ..a..")]
-    [InlineData(".", "S01E02 - .")]
+    [InlineData("...", "S01E02 - …")] // fewer than two characters would remain: unchanged
+    [InlineData("..a..", "S01E02 - ..a")] // ... but a dot at the end is always removed
+    [InlineData(".", "S01E02")]
+    [InlineData("A.?", "S01E02 - A")] // the dot is at the end only after cleaning
+    [InlineData("A. ?", "S01E02 - A")]
     public void RemovesDotsAtStartAndEndOfTitle(string title, string expected)
     {
         Assert.Equal(expected, EpisodeNameBuilder.Build(1, new EpisodeNumbers(2), title));

@@ -37,12 +37,12 @@ one or more selected season folders (E-2).
 
 | ID | Requirement |
 |---|---|
-| E-1 | **Show folder mode:** the first argument is a folder whose name does not start with `Staffel`. It is the show folder. All its direct sub folders whose names match the season pattern (E-3) are the seasons. Further arguments are ignored. |
-| E-2 | **Season folder mode:** the name of the first argument starts with `Staffel` (case-sensitive). Then all arguments are season folders, and the show folder is the parent of the first argument. This allows processing single seasons of a show. |
+| E-1 | **Show folder mode:** the first argument is a folder whose name does not start with a season keyword (E-2). It is the show folder. All its direct sub folders whose names match the season pattern (E-3) are the seasons. Further arguments are ignored. |
+| E-2 | **Season folder mode:** the name of the first argument starts with the season keyword `Staffel` or `Season` (case-sensitive), not followed by another letter: `Staffel 01`, `Season 1`, `Staffel01`, but not `Seasons of Love`. Then all arguments are season folders, and the show folder is the parent of the first argument. This allows processing single seasons of a show. |
 | E-3 | **Season pattern:** `^[a-zA-Z]+ ([0-9]+)` – a word of the letters A–Z, exactly one space, a number, then any text. The number is the season number. Matching: `Staffel 01`, `Staffel 1`, `Season 3 extras`. Not matching: `Staffel01`, `Specials`, `Zusätze 1` (umlaut). |
 | E-4 | Seasons are sorted by season number. |
 | E-5 | The name of the show folder is the initial search term; its absolute path is shown in the status bar. |
-| E-6 | In show folder mode any word works for the season folders (e.g. `Season 1`). A folder `Season 1` passed directly is therefore treated as a show folder (see open question Q-1). |
+| E-6 | In show folder mode any word works for the season folders (e.g. `Saison 1`), in season folder mode the first folder must start with a season keyword (E-2). |
 | E-7 | **Specials folder:** the folder with season number 0 (`Staffel 00`, `Staffel 0`) is a place for episodes that must not be renamed. It is ignored: its files are neither shown nor renamed. A show folder that only contains the specials folder has no seasons. |
 | E-8 | **Choosing a folder:** if no path is passed, the application starts without an error and lets the user choose a folder. The folder can also be changed at any time while the application is running. A chosen folder is handled like a single argument (E-1, E-2). |
 | E-9 | **Invalid arguments:** if the first argument is a file or does not exist, the application opens with a hint and the user can choose a folder (E-8). In season folder mode, arguments that are not season folders of the same show (no folder, not matching E-3, specials folder, different parent folder) are ignored and a hint names them. |
@@ -158,8 +158,8 @@ Triggered by selecting a result or changing the language.
 |---|---|
 | N-1 | Form: `S%02dE%02d - <episode title>`. Season and episode have at least two digits, larger numbers are kept completely (`S12E123`). A double episode gets both numbers and the title of its first episode: `S01E02E03 - <title>`. |
 | N-2 | Without a title (TMDB returns none, or nothing is left after cleaning) the name is only the episode code: `S01E02`, `S01E02E03`. |
-| N-3 | Dots at the start and end of the title are removed (`...und dann?` → `und dann`, `Ende.` → `Ende`), unless fewer than two characters would remain (see open question Q-2). |
-| N-4 | The title is cleaned, in this order: 1. All kinds of quotation marks (`"` `'` `’` `‘` `„` `“` `”` `«` `»` ...) become `'`. 2. `...` becomes `…`, `–` (en dash) becomes `-`. 3. `:` and `?` are removed. 4. The punctuation `-` `.` `,` `'` `&` `(` `)` `…` is kept. Every other special character becomes `_`, including the characters forbidden on Windows and `!` (see open question Q-3). Letters are kept completely, including umlauts, accents and `ß`, as well as digits. 5. Every whitespace character (tab, no-break space, ...) becomes a normal space, consecutive spaces become one; spaces at the start and end are removed. Examples: `AC/DC` → `AC_DC`, `Say "Hi"` → `Say 'Hi'`, `Stop!` → `Stop_`, `Teil 1: Der Anfang` → `Teil 1 Der Anfang`, `Was nun?` → `Was nun`, `Dr. House & Co.` stays unchanged. |
+| N-3 | Dots at the start and end of the title are removed (`...und dann?` → `und dann`, `Ende.` → `Ende`), unless fewer than two characters would remain. After cleaning (N-4), dots at the end are removed in any case, so the name never ends with a dot followed by the dot of the extension (`Dr. House & Co.` → `S01E02 - Dr. House & Co`, `A.?` → `S01E02 - A`). |
+| N-4 | The title is cleaned, in this order: 1. All kinds of quotation marks (`"` `'` `’` `‘` `„` `“` `”` `«` `»` ...) become `'`. 2. `...` becomes `…`, all kinds of dashes (`–` en dash, `—` em dash, ...) become `-`. 3. `:` and `?` are removed. 4. The punctuation `-` `.` `,` `'` `&` `(` `)` `…` is kept. Every other special character becomes `_`, including the characters forbidden on Windows and `!`. Letters are kept completely, including umlauts, accents and `ß`, as well as digits. 5. Every whitespace character (tab, no-break space, ...) becomes a normal space, consecutive spaces become one; spaces at the start and end are removed. Examples: `AC/DC` → `AC_DC`, `Say "Hi"` → `Say 'Hi'`, `Stop!` → `Stop_`, `Teil 1: Der Anfang` → `Teil 1 Der Anfang`, `Was nun?` → `Was nun`, `Dr. House & Co.` stays unchanged (but see N-3). |
 | N-5 | The extension is kept unchanged, including its case. The file stays in its folder. |
 | N-6 | The show name is not part of the file name; it is only shown in the result list. |
 
@@ -255,11 +255,7 @@ number, drag & drop, batch processing of several shows, operation without UI.
 
 ## 10. Open questions
 
-| ID | Question | Current behavior |
-|---|---|---|
-| Q-1 | Should `Season` start the season folder mode in addition to `Staffel` (E-2), e.g. `Season 1` passed directly? | only `Staffel` |
-| Q-2 | Should a dot at the end of the title be kept (`Dr. House & Co.`)? N-3 removes it, so the file name is `S01E02 - Dr. House & Co`. | removed |
-| Q-3 | Should the em dash `—` become `-` like the en dash, instead of `_`? | `_` |
+None.
 
 ## 11. Implementation status
 

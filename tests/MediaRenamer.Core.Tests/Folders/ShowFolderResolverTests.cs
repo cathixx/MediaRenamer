@@ -90,15 +90,28 @@ public sealed class ShowFolderResolverTests : IDisposable
     }
 
     [Fact]
-    public void SeasonFolderInEnglish_IsTreatedAsShowFolder()
+    public void SeasonFolderMode_EnglishKeyword()
     {
-        // only the keyword "Staffel" selects the season folder mode
+        var show = _temp.Folder("Eureka");
         var season = _temp.Folder("Eureka", "Season 1");
 
         var result = ShowFolderResolver.Resolve([season]);
 
+        Assert.Equal(ShowFolderProblem.None, result.Problem);
+        Assert.Equal(show, result.ShowPath);
+        Assert.Equal([season], result.Seasons.Select(s => s.Path));
+    }
+
+    [Fact]
+    public void FolderWithOtherWord_IsTreatedAsShowFolder()
+    {
+        // only the keywords "Staffel" and "Season" select the season folder mode
+        var folder = _temp.Folder("Eureka", "Saison 1");
+
+        var result = ShowFolderResolver.Resolve([folder]);
+
         Assert.Equal(ShowFolderProblem.NoSeasonFolders, result.Problem);
-        Assert.Equal(season, result.ShowPath);
+        Assert.Equal(folder, result.ShowPath);
     }
 
     [Fact]

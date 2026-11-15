@@ -26,7 +26,8 @@ public static class TitleSanitizer
     /// Cleans <paramref name="title"/>, in this order:
     /// <list type="number">
     /// <item>All kinds of quotation marks become <c>'</c>.</item>
-    /// <item><c>...</c> becomes <c>…</c>, <c>–</c> (en dash) becomes <c>-</c>.</item>
+    /// <item><c>...</c> becomes <c>…</c>, all kinds of dashes (en dash <c>–</c>, em dash <c>—</c>, ...) become
+    /// <c>-</c>.</item>
     /// <item><c>:</c> and <c>?</c> are removed.</item>
     /// <item>Letters (including umlauts, accents and <c>ß</c>), digits and the punctuation <c>- . , ' &amp; ( ) …</c>
     /// are kept, every other character becomes <c>_</c>, including the characters forbidden on Windows and <c>!</c>.</item>
@@ -41,22 +42,25 @@ public static class TitleSanitizer
         // composed form, so a letter with an accent is one character
         var text = title.Normalize(NormalizationForm.FormC);
 
-        var quotesReplaced = new StringBuilder(text.Length);
+        var replaced = new StringBuilder(text.Length);
         foreach (var rune in text.EnumerateRunes())
         {
             if (IsQuotationMark(rune))
             {
-                quotesReplaced.Append('\'');
+                replaced.Append('\'');
+            }
+            else if (Rune.GetUnicodeCategory(rune) == UnicodeCategory.DashPunctuation)
+            {
+                replaced.Append('-');
             }
             else
             {
-                quotesReplaced.Append(rune.ToString());
+                replaced.Append(rune.ToString());
             }
         }
 
-        text = quotesReplaced.ToString()
+        text = replaced.ToString()
             .Replace("...", "…", StringComparison.Ordinal)
-            .Replace('–', '-')
             .Replace(":", string.Empty, StringComparison.Ordinal)
             .Replace("?", string.Empty, StringComparison.Ordinal);
 
