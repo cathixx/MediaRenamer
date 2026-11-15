@@ -28,8 +28,11 @@ Notes for AI agents working in this repository.
 - Solution `MediaRenamer.sln` with these projects:
   - `src/MediaRenamer.Core`: business logic without UI dependency (folder and season detection, episode number
     recognition, naming, title cleaning, duplicate check, renaming). New business logic belongs here, with tests.
-  - `src/MediaRenamer`: the Avalonia desktop application.
+  - `src/MediaRenamer`: the Avalonia desktop application. `ViewModels/` contains the complete UI logic (MVVM with
+    CommunityToolkit.Mvvm) and must not use Avalonia types, so it can be tested without a display; `Views/` contains
+    the XAML views (compiled bindings, `x:DataType` required).
   - `tests/MediaRenamer.Core.Tests`: xUnit v3 tests of the core library; file system tests use `TempFolder`.
+  - `tests/MediaRenamer.Tests`: tests of the view models, plus `ScreenshotTests`.
 - Common settings are in `Directory.Build.props`, all package versions in `Directory.Packages.props`
   (central package management: `PackageReference` without `Version`).
 - Build: `dotnet build`. Test: `dotnet test` (runs on Microsoft.Testing.Platform, configured in `global.json`).
@@ -46,10 +49,13 @@ Notes for AI agents working in this repository.
   a public GitHub release with the next version number (changes only to `*.md`, `LICENSE`, `.idea/` or `.github/`
   don't create a release; use "Run workflow" to release manually).
 - Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
+- **Checking the UI without a display:** `ScreenshotTests` renders the windows headless (Avalonia.Headless with Skia)
+  with test data and saves PNGs: `SCREENSHOT_DIR=/tmp/shots dotnet test --project tests/MediaRenamer.Tests -- --explicit only`,
+  then look at the images. Do this after every visible change of the UI.
 - The application is started with folder paths as command line arguments (e.g. via the Windows "Send to" menu),
   see `Program.cs`.
 - In the sandbox the .NET SDK is installed in `~/.dotnet` but is not on the `PATH`:
-  `export PATH=$HOME/.dotnet:$PATH`. There is no display, so the UI can be built but not started there.
+  `export PATH=$HOME/.dotnet:$PATH`. There is no display, so the UI can only be checked with screenshots (see above).
 - All text files use LF line endings.
 - TMDB API key: locally in `.env` (ignored by git, template `.env.example`), in CI the repository secret
   `TMDB_API_KEY`. `src/MediaRenamer/EmbeddedTmdbApiKey.targets` embeds it at build time into the generated class

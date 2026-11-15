@@ -259,12 +259,15 @@ None.
 
 ## 11. Implementation status
 
-| Section | Status | Code |
-|---|---|---|
-| 2 Start and input | logic done, UI missing | `MediaRenamer.Core/Folders` |
-| 3 Video files and episode numbers | done | `MediaRenamer.Core/Episodes` |
-| 4 TheMovieDB | logic done (T-3 to T-8, T-10 to T-13, T-16, T-17, T-20 to T-22), UI missing (T-1, T-2 debounce, T-9, T-14, T-15, T-18, T-19, T-23) | `MediaRenamer.Core/Tmdb`, key embedding: `MediaRenamer/EmbeddedTmdbApiKey.targets` |
-| 5 New file name | done | `MediaRenamer.Core/Naming` |
-| 6 User interface | missing (hello world) | `MediaRenamer` |
-| 7 Renaming | logic for R-1, R-2 and R-5 done, the rest belongs to the UI (missing) | `MediaRenamer.Core/Renaming` |
-| 8 Error handling | missing | |
+All sections are implemented. The user interface has only been checked with automated tests and headless
+screenshots so far, not manually on every platform.
+
+| Section | Code |
+|---|---|
+| 2 Start and input | `MediaRenamer.Core/Folders`, `MediaRenamer/ViewModels/MainWindowViewModel.cs` |
+| 3 Video files and episode numbers | `MediaRenamer.Core/Episodes` |
+| 4 TheMovieDB | `MediaRenamer.Core/Tmdb`, key embedding: `MediaRenamer/EmbeddedTmdbApiKey.targets` |
+| 5 New file name | `MediaRenamer.Core/Naming` |
+| 6 User interface | `MediaRenamer/Views`, `MediaRenamer/ViewModels` |
+| 7 Renaming | `MediaRenamer.Core/Renaming`, `MediaRenamer/ViewModels/MainWindowViewModel.cs` |
+| 8 Error handling | `MediaRenamer/ViewModels/MainWindowViewModel.cs`, `MediaRenamer/Views/MessageWindow.axaml` |

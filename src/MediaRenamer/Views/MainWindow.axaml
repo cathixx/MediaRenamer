@@ -1,0 +1,157 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="using:MediaRenamer.Resources"
+        xmlns:vm="using:MediaRenamer.ViewModels"
+        xmlns:views="using:MediaRenamer.Views"
+        x:Class="MediaRenamer.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1600" Height="800" MinWidth="900" MinHeight="400"
+        WindowStartupLocation="CenterScreen">
+
+  <Window.Resources>
+    <views:BytesToBitmapConverter x:Key="BytesToBitmap" />
+  </Window.Resources>
+
+  <Window.Styles>
+    <!-- new file name (requirements 6.2) -->
+    <Style Selector="TextBlock.loading">
+      <Setter Property="FontStyle" Value="Italic" />
+      <Setter Property="Foreground" Value="Gray" />
+    </Style>
+    <Style Selector="TextBlock.notFound">
+      <Setter Property="FontStyle" Value="Italic" />
+      <Setter Property="Foreground" Value="#D13438" />
+    </Style>
+    <Style Selector="TextBlock.caseOnly">
+      <Setter Property="Foreground" Value="#2B6CC4" />
+    </Style>
+    <Style Selector="TextBlock.changed">
+      <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <!-- table rows -->
+    <Style Selector="Border.row">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="4,0" />
+      <!-- the same height for rows with and without checkbox -->
+      <Setter Property="MinHeight" Value="34" />
+    </Style>
+    <Style Selector="Border.row.seasonStart">
+      <Setter Property="BorderThickness" Value="0,2,0,0" />
+    </Style>
+    <Style Selector="Border.row.conflict">
+      <Setter Property="Background" Value="#40D13438" />
+    </Style>
+
+    <!-- message bars -->
+    <Style Selector="Border.message">
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="8,6" />
+      <Setter Property="Background" Value="#302B6CC4" />
+    </Style>
+    <Style Selector="Border.message.error">
+      <Setter Property="Background" Value="#40D13438" />
+    </Style>
+  </Window.Styles>
+
+  <DockPanel>
+    <!-- status bar -->
+    <Border DockPanel.Dock="Bottom" Padding="8,4"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,0,0">
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <ProgressBar IsIndeterminate="True" Width="80" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+        <SelectableTextBlock Text="{Binding ShowPath}" VerticalAlignment="Center" />
+      </StackPanel>
+    </Border>
+
+    <Grid ColumnDefinitions="300,*,Auto" Margin="8">
+      <!-- left: folder, search, results, language, rename -->
+      <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="8">
+        <Button Grid.Row="0" Content="{x:Static res:Strings.ChooseFolder}" HorizontalAlignment="Stretch"
+                IsEnabled="{Binding IsSearchEnabled}" Click="OnChooseFolder" />
+        <TextBox Grid.Row="1" Text="{Binding SearchTerm}" PlaceholderText="{x:Static res:Strings.SearchPlaceholder}"
+                 IsEnabled="{Binding IsSearchEnabled}" />
+        <ListBox Grid.Row="2" ItemsSource="{Binding SearchResults}" SelectedItem="{Binding SelectedShow}"
+                 SelectionMode="Single" IsEnabled="{Binding IsResultListEnabled}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:ShowItemViewModel">
+              <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <StackPanel Grid.Row="3" Spacing="4">
+          <TextBlock Text="{x:Static res:Strings.Language}" />
+          <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}"
+                    HorizontalAlignment="Stretch" IsEnabled="{Binding IsSearchEnabled}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:LanguageOption">
+                <TextBlock Text="{Binding DisplayName}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </StackPanel>
+        <Button Grid.Row="4" Content="{x:Static res:Strings.Rename}" Command="{Binding RenameCommand}"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Classes="accent" />
+      </Grid>
+
+      <!-- center: messages and table -->
+      <DockPanel Grid.Column="1" Margin="8,0">
+        <StackPanel DockPanel.Dock="Top" Spacing="4">
+          <Border Classes="message" IsVisible="{Binding FolderMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock Text="{Binding FolderMessage}" TextWrapping="Wrap" />
+          </Border>
+          <Border Classes="message error" IsVisible="{Binding TmdbError, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <DockPanel>
+              <Button DockPanel.Dock="Right" Content="{x:Static res:Strings.Retry}" Command="{Binding RetryCommand}"
+                      Margin="8,0,0,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding TmdbError}" TextWrapping="Wrap" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
+          <Border Classes="message error" IsVisible="{Binding ConflictMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock Text="{Binding ConflictMessage}" TextWrapping="Wrap" />
+          </Border>
+        </StackPanel>
+
+        <!-- table header -->
+        <Border DockPanel.Dock="Top" Padding="4,8,4,4"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,0,1">
+          <Grid ColumnDefinitions="32,48,*,*" ColumnSpacing="8">
+            <TextBlock Grid.Column="1" Text="{x:Static res:Strings.ColumnNumber}" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="2" Text="{x:Static res:Strings.ColumnOldName}" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="3" Text="{x:Static res:Strings.ColumnNewName}" FontWeight="SemiBold" />
+          </Grid>
+        </Border>
+
+        <ScrollViewer IsEnabled="{Binding IsTableEnabled}">
+          <ItemsControl ItemsSource="{Binding Episodes}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:EpisodeRowViewModel">
+                <Border Classes="row" Classes.seasonStart="{Binding StartsNewSeason}"
+                        Classes.conflict="{Binding IsConflict}">
+                  <Grid ColumnDefinitions="32,48,*,*" ColumnSpacing="8">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" IsVisible="{Binding IsCheckboxVisible}"
+                              MinHeight="0" Padding="0" />
+                    <TextBlock Grid.Column="1" Text="{Binding NumberText}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding OldName}" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OldName}" />
+                    <TextBlock Grid.Column="3" Text="{Binding NewNameText}" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding NewNameText}"
+                               Classes.loading="{Binding IsLoading}"
+                               Classes.notFound="{Binding State, Converter={x:Static views:StateConverters.IsNotFound}}"
+                               Classes.caseOnly="{Binding State, Converter={x:Static views:StateConverters.IsCaseOnly}}"
+                               Classes.changed="{Binding State, Converter={x:Static views:StateConverters.IsChanged}}" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </DockPanel>
+
+      <!-- right: poster -->
+      <Image Grid.Column="2" Source="{Binding Poster, Converter={StaticResource BytesToBitmap}}"
+             MaxWidth="400" MaxHeight="750" Stretch="Uniform" VerticalAlignment="Top" />
+    </Grid>
+  </DockPanel>
+</Window>

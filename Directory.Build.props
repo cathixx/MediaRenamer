@@ -5,5 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
+    <!-- local builds; CI sets the release version with -p:Version=... -->
+    <Version>0.0.0-snapshot</Version>
   </PropertyGroup>
 </Project>

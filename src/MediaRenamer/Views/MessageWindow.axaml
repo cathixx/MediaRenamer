@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="using:MediaRenamer.Resources"
+        x:Class="MediaRenamer.Views.MessageWindow"
+        Title="{x:Static res:Strings.Error}"
+        Width="520" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="16">
+    <Button DockPanel.Dock="Bottom" Content="{x:Static res:Strings.Ok}" HorizontalAlignment="Right" MinWidth="80"
+            HorizontalContentAlignment="Center" IsDefault="True" IsCancel="True" Margin="0,16,0,0"
+            Click="OnOk" />
+    <StackPanel Spacing="8">
+      <TextBlock x:Name="HeaderText" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap" />
+      <SelectableTextBlock x:Name="MessageText" TextWrapping="Wrap" MaxHeight="400" />
+    </StackPanel>
+  </DockPanel>
+</Window>

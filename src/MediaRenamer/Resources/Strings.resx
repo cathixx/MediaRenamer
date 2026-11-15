@@ -4,14 +4,35 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Greeting" xml:space="preserve"><value>Hello, MediaRenamer!</value></data>
-  <data name="SearchWatermark" xml:space="preserve"><value>Search for a show…</value></data>
-  <data name="ExampleCheckbox" xml:space="preserve"><value>Example checkbox</value></data>
-  <data name="ClickMe" xml:space="preserve"><value>Click me</value></data>
-  <data name="NoFoldersPassed" xml:space="preserve"><value>No folders passed</value></data>
-  <data name="ArgumentsFormat" xml:space="preserve"><value>Arguments: {0}</value></data>
-  <data name="SearchedForFormat" xml:space="preserve"><value>You searched for: "{0}"</value></data>
-  <data name="CurrentLanguageFormat" xml:space="preserve"><value>Language: {0}</value></data>
-  <data name="TmdbApiKeyAvailable" xml:space="preserve"><value>TMDB API key: available</value></data>
-  <data name="TmdbApiKeyMissing" xml:space="preserve"><value>TMDB API key: missing</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search for a show…</value></data>
+  <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageDe" xml:space="preserve"><value>German</value></data>
+  <data name="LanguageEn" xml:space="preserve"><value>English</value></data>
+  <data name="Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="ChooseFolder" xml:space="preserve"><value>Choose folder…</value></data>
+  <data name="ChooseFolderTitle" xml:space="preserve"><value>Choose the show folder</value></data>
+  <data name="ColumnNumber" xml:space="preserve"><value>#</value></data>
+  <data name="ColumnOldName" xml:space="preserve"><value>Old file name</value></data>
+  <data name="ColumnNewName" xml:space="preserve"><value>New file name</value></data>
+  <data name="Loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="NotFound" xml:space="preserve"><value>&lt;not found&gt;</value></data>
+  <data name="Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="ChooseShowFolder" xml:space="preserve"><value>Choose a show folder to start.</value></data>
+  <data name="NotAFolderFormat" xml:space="preserve"><value>"{0}" is not a folder. Choose a show folder.</value></data>
+  <data name="NoSeasonFoldersFormat" xml:space="preserve"><value>No season folders found in "{0}". Choose another folder.</value></data>
+  <data name="IgnoredPathsFormat" xml:space="preserve"><value>Ignored, not a season folder of this show: {0}</value></data>
+  <data name="FolderReadFailedFormat" xml:space="preserve"><value>The folder could not be read: {0}</value></data>
+  <data name="SearchFailedFormat" xml:space="preserve"><value>Searching on TheMovieDB failed: {0}</value></data>
+  <data name="EpisodesFailedFormat" xml:space="preserve"><value>Loading the episodes from TheMovieDB failed: {0}</value></data>
+  <data name="PosterFailedFormat" xml:space="preserve"><value>Loading the poster from TheMovieDB failed: {0}</value></data>
+  <data name="ConflictsFormat" xml:space="preserve"><value>Episode numbers occur more than once. Deselect files until every number is selected only once: {0}</value></data>
+  <data name="Error" xml:space="preserve"><value>Error</value></data>
+  <data name="ErrorOccurred" xml:space="preserve"><value>An error occurred</value></data>
+  <data name="UnexpectedError" xml:space="preserve"><value>An unexpected error occurred</value></data>
+  <data name="RenameFailedFormat" xml:space="preserve"><value>The following files could not be renamed:
+{0}</value></data>
+  <data name="TargetExists" xml:space="preserve"><value>a file with the new name already exists</value></data>
+  <data name="MissingApiKeyHeader" xml:space="preserve"><value>No API key for TheMovieDB</value></data>
+  <data name="MissingApiKeyText" xml:space="preserve"><value>This version was built without an API key. Please set your own TMDB API key in the environment variable TMDB_API_KEY.</value></data>
 </root>

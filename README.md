@@ -4,7 +4,9 @@ Cross-platform desktop tool (Windows, Linux, macOS) that renames locally stored 
 using episode titles from [TheMovieDB](https://www.themoviedb.org/).
 
 This is a re-implementation of a JavaFX application in C# / .NET with [Avalonia UI](https://avaloniaui.net/).
-Current state: hello-world skeleton, the actual functionality is not implemented yet.
+Usage: start the application with the show folder as argument (e.g. via the Windows Explorer "Send to" menu) or
+choose the folder in the application. It searches the show on TheMovieDB, shows the proposed names and renames the
+selected files with "Rename".
 
 The behavior is specified in [docs/requirements.md](docs/requirements.md).
 
@@ -32,8 +34,9 @@ Project structure:
 | Project | Content |
 |---|---|
 | `src/MediaRenamer.Core` | Business logic without UI: folder and season detection, episode number recognition, naming, renaming |
-| `src/MediaRenamer` | Avalonia desktop application |
+| `src/MediaRenamer` | Avalonia desktop application (views and view models) |
 | `tests/MediaRenamer.Core.Tests` | Tests of the business logic (xUnit v3) |
+| `tests/MediaRenamer.Tests` | Tests of the view models, headless screenshots of the windows |
 
 ## TMDB API key
 
