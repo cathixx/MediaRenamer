@@ -49,7 +49,10 @@ Notes for AI agents working in this repository.
 - Self-update (requirements section 10): `MediaRenamer.Core/Updates/UpdateService.cs` downloads the release file
   `MediaRenamer-<runtime>.zip`/`.tar.gz` and expects the executable at the top level of the archive. Keep the asset
   names and the archive layout in `.github/workflows/build.yml` compatible, otherwise installed versions can no
-  longer update themselves.
+  longer update themselves. Never modify or rename the running executable: a single-file app loads assemblies lazily
+  from its own file (doing so made the restart of 1.0.1 to 1.0.3 fail with `FileNotFoundException` for
+  `System.Diagnostics.Process`). The downloaded `<name>.new` completes the update (`--complete-update=`, see
+  `UpdateArguments` and `Program.Main`); keep these options supported in all future versions.
 - Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
 - **Application icon:** `src/MediaRenamer/Assets/icon.svg`, `icon.ico` and `icon-256.png` are generated from the
   vector description in `tests/MediaRenamer.Tests/IconGenerator.cs`; never edit them directly. After changing the icon:

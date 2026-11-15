@@ -46,22 +46,27 @@ public partial class App : Application
                 window.Opened += async (_, _) =>
                 {
                     await viewModel.OpenAsync(Program.FolderArguments);
+                    if (Program.StartupError is { } startupError)
+                    {
+                        await new DialogService(window).ShowErrorAsync(Strings.UpdateFailedHeader, startupError);
+                    }
+
                     var executable = Environment.ProcessPath;
-                    if (await viewModel.CheckForUpdateAsync(AppInfo.ReleaseVersion, executable))
+                    if (await viewModel.CheckForUpdateAsync(AppInfo.ReleaseVersion, executable) is { } newExecutable)
                     {
                         try
                         {
-                            Restart(executable!);
+                            // the new version replaces this one as soon as this process has exited (UP-4)
+                            Start(newExecutable,
+                                UpdateArguments.Create(executable!, Environment.ProcessId, Program.Arguments));
+                            desktop.Shutdown();
                         }
                         catch (Exception e)
                         {
-                            // the new version is installed, it is just not started automatically
                             Console.Error.WriteLine(e);
-                            await new DialogService(window).ShowErrorAsync(Strings.UpdateInstalledHeader,
-                                Strings.UpdateInstalledRestartFailed(MainWindowViewModel.ErrorDetails(e)));
+                            await new DialogService(window).ShowErrorAsync(Strings.UpdateFailedHeader,
+                                Strings.UpdateFailed(MainWindowViewModel.ErrorDetails(e), UpdateService.ReleasesUrl));
                         }
-
-                        desktop.Shutdown();
                     }
                 };
                 desktop.MainWindow = window;
@@ -71,36 +76,20 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    /// <summary>
-    /// Starts the (updated) executable with the same arguments (UP-4): directly, and if that fails via the shell (like
-    /// a double click in the file manager).
-    /// </summary>
-    private static void Restart(string executable)
-    {
-        try
-        {
-            Process.Start(StartInfo(executable, useShellExecute: false));
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine(e);
-            Process.Start(StartInfo(executable, useShellExecute: true));
-        }
-    }
-
-    private static ProcessStartInfo StartInfo(string executable, bool useShellExecute)
+    /// <summary>Starts an executable with the given arguments in its folder.</summary>
+    internal static void Start(string executable, IEnumerable<string> arguments)
     {
         var start = new ProcessStartInfo(executable)
         {
-            UseShellExecute = useShellExecute,
+            UseShellExecute = false,
             WorkingDirectory = Path.GetDirectoryName(executable) ?? Environment.CurrentDirectory,
         };
-        foreach (var argument in Environment.GetCommandLineArgs().Skip(1))
+        foreach (var argument in arguments)
         {
             start.ArgumentList.Add(argument);
         }
 
-        return start;
+        Process.Start(start);
     }
 
     /// <summary>

@@ -156,7 +156,7 @@ public sealed class UpdateServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Install_Windows_ReplacesTheExecutableAndKeepsTheOldOne()
+    public async Task Download_Windows_PutsTheNewExecutableNextToTheRunningOne()
     {
         var executable = _temp.File("app", "MediaRenamer.exe");
         File.WriteAllText(executable, "old version");
@@ -165,19 +165,18 @@ public sealed class UpdateServiceTests : IDisposable
         var update = new AvailableUpdate(new Version(1, 2, 0), ReleaseUrl,
             new GitHubAsset("MediaRenamer-win-x64.zip", zip.Length, Sha256(zip), DownloadUrl));
 
-        await service.InstallAsync(update, executable, TestContext.Current.CancellationToken);
+        var newExecutable = await service.DownloadAsync(update, executable, TestContext.Current.CancellationToken);
 
-        Assert.Equal("new version", File.ReadAllText(executable));
+        // the running executable is not touched
+        Assert.Equal(executable + ".new", newExecutable);
+        Assert.Equal("old version", File.ReadAllText(executable));
+        Assert.Equal("new version", File.ReadAllText(newExecutable));
         Assert.Equal(DownloadUrl, Assert.Single(handler.Requests).RequestUri!.ToString());
-        // no temporary files left; the old version is gone where possible (Linux/macOS) or removed at the next start
-        Assert.All(_temp.Entries("app"), name => Assert.True(name is "MediaRenamer.exe" or "MediaRenamer.exe.old"));
-
-        UpdateService.CleanUp(executable);
-        Assert.Equal(["MediaRenamer.exe"], _temp.Entries("app"));
+        Assert.Equal(["MediaRenamer.exe", "MediaRenamer.exe.new"], _temp.Entries("app"));
     }
 
     [Fact]
-    public async Task Install_LinuxOrMac_TarGzAndExecutablePermission()
+    public async Task Download_LinuxOrMac_TarGzAndExecutablePermission()
     {
         var executable = _temp.File("app", "MediaRenamer");
         File.WriteAllText(executable, "old version");
@@ -186,18 +185,18 @@ public sealed class UpdateServiceTests : IDisposable
         var update = new AvailableUpdate(new Version(1, 2, 0), ReleaseUrl,
             new GitHubAsset("MediaRenamer-linux-x64.tar.gz", tarGz.Length, Sha256(tarGz), DownloadUrl));
 
-        await service.InstallAsync(update, executable, TestContext.Current.CancellationToken);
+        var newExecutable = await service.DownloadAsync(update, executable, TestContext.Current.CancellationToken);
 
-        Assert.Equal("new version", File.ReadAllText(executable));
-        Assert.Equal(["MediaRenamer"], _temp.Entries("app"));
+        Assert.Equal("new version", File.ReadAllText(newExecutable));
+        Assert.Equal(["MediaRenamer", "MediaRenamer.new"], _temp.Entries("app"));
         if (!OperatingSystem.IsWindows())
         {
-            Assert.True(File.GetUnixFileMode(executable).HasFlag(UnixFileMode.UserExecute));
+            Assert.True(File.GetUnixFileMode(newExecutable).HasFlag(UnixFileMode.UserExecute));
         }
     }
 
     [Fact]
-    public async Task Install_WrongChecksum_KeepsTheExecutable()
+    public async Task Download_WrongChecksum_LeavesNothing()
     {
         var executable = _temp.File("app", "MediaRenamer.exe");
         File.WriteAllText(executable, "old version");
@@ -207,14 +206,14 @@ public sealed class UpdateServiceTests : IDisposable
             new GitHubAsset("MediaRenamer-win-x64.zip", zip.Length, Sha256([1, 2, 3]), DownloadUrl));
 
         await Assert.ThrowsAsync<UpdateException>(
-            () => service.InstallAsync(update, executable, TestContext.Current.CancellationToken));
+            () => service.DownloadAsync(update, executable, TestContext.Current.CancellationToken));
 
         Assert.Equal("old version", File.ReadAllText(executable));
         Assert.Equal(["MediaRenamer.exe"], _temp.Entries("app"));
     }
 
     [Fact]
-    public async Task Install_IncompleteDownload_KeepsTheExecutable()
+    public async Task Download_Incomplete_LeavesNothing()
     {
         var executable = _temp.File("app", "MediaRenamer.exe");
         var zip = Zip("MediaRenamer.exe", "new version");
@@ -223,13 +222,13 @@ public sealed class UpdateServiceTests : IDisposable
             new GitHubAsset("MediaRenamer-win-x64.zip", zip.Length + 100, null, DownloadUrl));
 
         await Assert.ThrowsAsync<UpdateException>(
-            () => service.InstallAsync(update, executable, TestContext.Current.CancellationToken));
+            () => service.DownloadAsync(update, executable, TestContext.Current.CancellationToken));
 
         Assert.Equal(["MediaRenamer.exe"], _temp.Entries("app"));
     }
 
     [Fact]
-    public async Task Install_ArchiveWithoutExecutable_KeepsTheExecutable()
+    public async Task Download_ArchiveWithoutExecutable_LeavesNothing()
     {
         var executable = _temp.File("app", "MediaRenamer.exe");
         var zip = Zip("other.exe", "new version");
@@ -238,14 +237,14 @@ public sealed class UpdateServiceTests : IDisposable
             new GitHubAsset("MediaRenamer-win-x64.zip", zip.Length, Sha256(zip), DownloadUrl));
 
         var e = await Assert.ThrowsAsync<UpdateException>(
-            () => service.InstallAsync(update, executable, TestContext.Current.CancellationToken));
+            () => service.DownloadAsync(update, executable, TestContext.Current.CancellationToken));
 
         Assert.Contains("MediaRenamer.exe", e.Message, StringComparison.Ordinal);
         Assert.Equal(["MediaRenamer.exe"], _temp.Entries("app"));
     }
 
     [Fact]
-    public async Task Install_DownloadFails_KeepsTheExecutable()
+    public async Task Download_Fails_LeavesNothing()
     {
         var executable = _temp.File("app", "MediaRenamer.exe");
         var service = Service(_ => new HttpResponseMessage(HttpStatusCode.NotFound), "win-x64", out _);
@@ -253,18 +252,94 @@ public sealed class UpdateServiceTests : IDisposable
             new GitHubAsset("MediaRenamer-win-x64.zip", 10, null, DownloadUrl));
 
         await Assert.ThrowsAsync<UpdateException>(
-            () => service.InstallAsync(update, executable, TestContext.Current.CancellationToken));
+            () => service.DownloadAsync(update, executable, TestContext.Current.CancellationToken));
 
         Assert.Equal(["MediaRenamer.exe"], _temp.Entries("app"));
     }
 
     [Fact]
-    public void CleanUp_WithoutOldFile_DoesNothing()
+    public void CompleteUpdate_CopiesTheNewExecutableOverTheTarget()
+    {
+        var target = _temp.File("app", "MediaRenamer.exe");
+        File.WriteAllText(target, "old version");
+        var newExecutable = _temp.File("app", "MediaRenamer.exe.new");
+        File.WriteAllText(newExecutable, "new version");
+
+        UpdateService.CompleteUpdate(newExecutable, target, previousProcessId: int.MaxValue, TimeSpan.FromSeconds(5));
+
+        Assert.Equal("new version", File.ReadAllText(target));
+        Assert.True(File.Exists(newExecutable)); // removed by the new version at its start
+    }
+
+    [Fact]
+    public async Task CompleteUpdate_RetriesWhileTheTargetIsLocked()
+    {
+        var target = _temp.File("app", "MediaRenamer.exe");
+        var newExecutable = _temp.File("app", "MediaRenamer.exe.new");
+        File.WriteAllText(newExecutable, "new version");
+
+        var locked = new FileStream(target, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        var unlock = Task.Run(async () =>
+        {
+            await Task.Delay(700);
+            await locked.DisposeAsync();
+        }, TestContext.Current.CancellationToken);
+
+        UpdateService.CompleteUpdate(newExecutable, target, previousProcessId: null, TimeSpan.FromSeconds(10));
+        await unlock;
+
+        Assert.Equal("new version", File.ReadAllText(target));
+    }
+
+    [Fact]
+    public void CompleteUpdate_GivesUpAfterTheTimeout()
+    {
+        var target = _temp.File("app", "MediaRenamer.exe");
+        var newExecutable = _temp.File("app", "MediaRenamer.exe.new");
+        using var locked = new FileStream(target, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        Assert.ThrowsAny<IOException>(() =>
+            UpdateService.CompleteUpdate(newExecutable, target, previousProcessId: null, TimeSpan.FromMilliseconds(600)));
+    }
+
+    [Fact]
+    public async Task CleanUp_RemovesTheFilesOfAnUpdate()
+    {
+        var executable = _temp.File("app", "MediaRenamer.exe");
+        _temp.File("app", "MediaRenamer.exe.new");
+        _temp.File("app", "MediaRenamer.exe.old");
+
+        await UpdateService.CleanUpAsync(executable);
+
+        Assert.Equal(["MediaRenamer.exe"], _temp.Entries("app"));
+    }
+
+    [Fact]
+    public async Task CleanUp_WithoutFiles_DoesNothing()
     {
         var executable = _temp.File("app", "MediaRenamer.exe");
 
-        UpdateService.CleanUp(executable);
+        await UpdateService.CleanUpAsync(executable);
 
         Assert.Equal(["MediaRenamer.exe"], _temp.Entries("app"));
+    }
+
+    [Fact]
+    public void UpdateArguments_RoundTrip()
+    {
+        var arguments = UpdateArguments.Create("/apps/MediaRenamer", 1234, ["--lang=de", "/shows/Eureka"]);
+
+        Assert.True(UpdateArguments.TryParse(arguments, out var target, out var process, out var original));
+        Assert.Equal("/apps/MediaRenamer", target);
+        Assert.Equal(1234, process);
+        Assert.Equal(["--lang=de", "/shows/Eureka"], original);
+    }
+
+    [Fact]
+    public void UpdateArguments_NormalStart()
+    {
+        Assert.False(UpdateArguments.TryParse(["/shows/Eureka"], out _, out var process, out var original));
+        Assert.Null(process);
+        Assert.Equal(["/shows/Eureka"], original);
     }
 }

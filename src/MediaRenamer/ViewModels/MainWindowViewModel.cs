@@ -148,17 +148,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public bool IsSearchEnabled => !IsRenaming && !IsUpdating;
 
     /// <summary>
-    /// Checks for a newer version and, after confirmation, installs it (section 10). Returns whether the application
-    /// has to be restarted to use the new version. Errors while checking are only logged; errors while installing are
-    /// shown and the current version keeps running.
+    /// Checks for a newer version and, after confirmation, downloads it (section 10). Returns the path of the new
+    /// executable, which has to be started to complete the update (see <see cref="UpdateArguments"/>), or <c>null</c>.
+    /// Errors while checking are only logged; errors while downloading are shown and the current version keeps
+    /// running.
     /// </summary>
     /// <param name="currentVersion">Version of the running application, <c>null</c> for local builds (no check).</param>
     /// <param name="executablePath">Path of the running executable.</param>
-    public async Task<bool> CheckForUpdateAsync(Version? currentVersion, string? executablePath)
+    public async Task<string?> CheckForUpdateAsync(Version? currentVersion, string? executablePath)
     {
         if (_updates is null || currentVersion is null || executablePath is null)
         {
-            return false;
+            return null;
         }
 
         AvailableUpdate? update;
@@ -169,7 +170,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (UpdateException e)
         {
             Console.Error.WriteLine(e.Message); // UP-1: e.g. offline, not worth a message
-            return false;
+            return null;
         }
 
         if (update is null
@@ -177,7 +178,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 Strings.UpdateAvailable(Format(update.Version), Format(currentVersion)), Strings.UpdateNow,
                 Strings.UpdateLater))
         {
-            return false;
+            return null;
         }
 
         // a running rename is finished first
@@ -190,8 +191,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         UpdateMessage = Strings.Updating(Format(update.Version));
         try
         {
-            await _updates.InstallAsync(update, executablePath);
-            return true;
+            return await _updates.DownloadAsync(update, executablePath);
         }
         catch (Exception e)
         {
@@ -199,7 +199,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Console.Error.WriteLine(e);
             var details = e is UpdateException { InnerException: null } ? e.Message : ErrorDetails(e);
             await _dialogs.ShowErrorAsync(Strings.UpdateFailedHeader, Strings.UpdateFailed(details, update.ReleaseUrl));
-            return false;
+            return null;
         }
         finally
         {

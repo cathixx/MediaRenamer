@@ -26,10 +26,12 @@ public interface IUpdateService
     Task<AvailableUpdate?> CheckAsync(Version currentVersion, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Downloads the update, verifies it and replaces the executable <paramref name="executablePath"/> with the new
-    /// version (UP-4). The running process can continue; the new version is used after a restart.
+    /// Downloads and verifies the update and puts the new executable next to <paramref name="executablePath"/>
+    /// (<c>&lt;name&gt;.new</c>, UP-4). The running executable is not changed: a single-file application loads parts of
+    /// itself from its file while it runs. The new executable completes the update, see
+    /// <see cref="UpdateService.CompleteUpdate"/>. Returns the path of the new executable.
     /// </summary>
-    Task InstallAsync(AvailableUpdate update, string executablePath, CancellationToken cancellationToken = default);
+    Task<string> DownloadAsync(AvailableUpdate update, string executablePath, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Updates from the GitHub releases of the project.</summary>
@@ -43,10 +45,12 @@ public sealed class UpdateService(HttpClient httpClient, string assetName, strin
 
     private static readonly Uri LatestReleaseUri = new($"https://api.github.com/repos/{Repository}/releases/latest");
 
-    /// <summary>Suffix of the previous executable, kept until the next start (it can't be deleted while running on Windows).</summary>
-    public const string OldSuffix = ".old";
+    /// <summary>Suffix of the downloaded new executable, which completes the update.</summary>
+    public const string NewSuffix = ".new";
 
-    private const string NewSuffix = ".new";
+    /// <summary>Suffix of the previous executable left by versions up to 1.0.3, which replaced the running file.</summary>
+    private const string OldSuffix = ".old";
+
     private const string DownloadSuffix = ".download";
 
     /// <summary>Update service for the platform the application runs on.</summary>
@@ -92,16 +96,63 @@ public sealed class UpdateService(HttpClient httpClient, string assetName, strin
         return Version.TryParse(version, out var parsed) ? Normalize(parsed) : null;
     }
 
-    /// <summary>Removes the previous executable left by an update (UP-6). Errors are ignored.</summary>
-    public static void CleanUp(string executablePath)
+    /// <summary>
+    /// Removes the files left by an update (UP-6): the new executable that completed the update (it may still be
+    /// exiting, so this is retried for a few seconds) and the previous executable of older versions. Errors are ignored.
+    /// </summary>
+    public static async Task CleanUpAsync(string executablePath)
+    {
+        foreach (var file in new[] { executablePath + NewSuffix, executablePath + OldSuffix })
+        {
+            for (var attempt = 0; attempt < 20 && File.Exists(file); attempt++)
+            {
+                if (TryDelete(file))
+                {
+                    break;
+                }
+
+                await Task.Delay(250).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Completes an update, called in the new executable <paramref name="newExecutable"/> (UP-4): waits until the
+    /// previous version (process <paramref name="previousProcessId"/>) has exited, then copies the new executable over
+    /// <paramref name="target"/>. Copying is retried for a while, e.g. while a virus scanner checks the file.
+    /// </summary>
+    public static void CompleteUpdate(string newExecutable, string target, int? previousProcessId, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        if (previousProcessId is { } processId)
+        {
+            WaitForExit(processId, timeout);
+        }
+
+        while (true)
+        {
+            try
+            {
+                File.Copy(newExecutable, target, overwrite: true);
+                return;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException && DateTime.UtcNow < deadline)
+            {
+                Thread.Sleep(250);
+            }
+        }
+    }
+
+    private static void WaitForExit(int processId, TimeSpan timeout)
     {
         try
         {
-            File.Delete(executablePath + OldSuffix);
+            using var process = System.Diagnostics.Process.GetProcessById(processId);
+            process.WaitForExit(timeout);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        catch (ArgumentException)
         {
-            // still in use or no permission: try again at the next start
+            // already exited
         }
     }
 
@@ -139,33 +190,33 @@ public sealed class UpdateService(HttpClient httpClient, string assetName, strin
         return new AvailableUpdate(version, release!.HtmlUrl ?? ReleasesUrl, asset);
     }
 
-    public async Task InstallAsync(AvailableUpdate update, string executablePath,
+    public async Task<string> DownloadAsync(AvailableUpdate update, string executablePath,
         CancellationToken cancellationToken = default)
     {
         var download = executablePath + DownloadSuffix;
         var newExecutable = executablePath + NewSuffix;
         try
         {
-            await DownloadAsync(update.Asset, download, cancellationToken).ConfigureAwait(false);
+            await DownloadFileAsync(update.Asset, download, cancellationToken).ConfigureAwait(false);
             await VerifyAsync(update.Asset, download, cancellationToken).ConfigureAwait(false);
             await ExtractAsync(download, newExecutable, cancellationToken).ConfigureAwait(false);
-            CopyPermissions(executablePath, newExecutable);
-            Replace(executablePath, newExecutable);
+            MakeExecutable(executablePath, newExecutable);
+            return newExecutable;
         }
         catch (Exception e) when (e is HttpRequestException or IOException or UnauthorizedAccessException
                                       or InvalidDataException
                                   || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested))
         {
+            TryDelete(newExecutable);
             throw new UpdateException(e.Message, e);
         }
         finally
         {
             TryDelete(download);
-            TryDelete(newExecutable);
         }
     }
 
-    private async Task DownloadAsync(GitHubAsset asset, string path, CancellationToken cancellationToken)
+    private async Task DownloadFileAsync(GitHubAsset asset, string path, CancellationToken cancellationToken)
     {
         using var response = await httpClient.GetAsync(asset.DownloadUrl, HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
@@ -224,7 +275,8 @@ public sealed class UpdateService(HttpClient httpClient, string assetName, strin
         throw new InvalidDataException($"The download does not contain {executableName}.");
     }
 
-    private static void CopyPermissions(string from, string to)
+    /// <summary>The new executable gets the permissions of the current one, at least executable for the user.</summary>
+    private static void MakeExecutable(string from, string to)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -234,38 +286,16 @@ public sealed class UpdateService(HttpClient httpClient, string assetName, strin
         }
     }
 
-    /// <summary>
-    /// Replaces the executable: the current one is renamed (possible while it runs, also on Windows), the new one takes
-    /// its place. If the second step fails, the current one is restored.
-    /// </summary>
-    private static void Replace(string executablePath, string newExecutable)
-    {
-        var old = executablePath + OldSuffix;
-        TryDelete(old);
-        File.Move(executablePath, old);
-        try
-        {
-            File.Move(newExecutable, executablePath);
-        }
-        catch
-        {
-            File.Move(old, executablePath);
-            throw;
-        }
-
-        // possible on Linux and macOS while the old version runs; on Windows it is removed at the next start
-        TryDelete(old);
-    }
-
-    private static void TryDelete(string path)
+    private static bool TryDelete(string path)
     {
         try
         {
             File.Delete(path);
+            return true;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            // ignored
+            return false;
         }
     }
 

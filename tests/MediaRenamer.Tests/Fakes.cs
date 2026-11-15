@@ -108,7 +108,7 @@ internal sealed class FakeUpdates : IUpdateService
     public bool FailCheck { get; set; }
     public bool FailInstall { get; set; }
 
-    /// <summary>Thrown by <see cref="InstallAsync"/> if set (an unexpected error).</summary>
+    /// <summary>Thrown by <see cref="DownloadAsync"/> if set (an unexpected error).</summary>
     public Exception? InstallException { get; set; }
     public List<(AvailableUpdate Update, string ExecutablePath)> Installed { get; } = [];
     public int Checks { get; private set; }
@@ -121,19 +121,20 @@ internal sealed class FakeUpdates : IUpdateService
             : Task.FromResult(Update is not null && Update.Version > currentVersion ? Update : null);
     }
 
-    public Task InstallAsync(AvailableUpdate update, string executablePath, CancellationToken cancellationToken = default)
+    public Task<string> DownloadAsync(AvailableUpdate update, string executablePath,
+        CancellationToken cancellationToken = default)
     {
         if (InstallException is not null)
         {
-            return Task.FromException(InstallException);
+            return Task.FromException<string>(InstallException);
         }
 
         if (FailInstall)
         {
-            return Task.FromException(new UpdateException("no permission"));
+            return Task.FromException<string>(new UpdateException("no permission"));
         }
 
         Installed.Add((update, executablePath));
-        return Task.CompletedTask;
+        return Task.FromResult(executablePath + ".new");
     }
 }

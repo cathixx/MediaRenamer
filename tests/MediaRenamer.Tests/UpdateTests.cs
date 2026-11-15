@@ -19,14 +19,14 @@ public class UpdateTests
         new(new TmdbService(new FakeTmdbClient(), ["en-US"]), _dialogs, "en-US", _updates);
 
     [Fact]
-    public async Task NewerVersion_Confirmed_InstallsAndRequestsRestart()
+    public async Task NewerVersion_Confirmed_DownloadsTheNewExecutable()
     {
         _dialogs.Confirm = true;
         var vm = CreateViewModel();
 
-        var restart = await vm.CheckForUpdateAsync(new Version(1, 1, 0), Executable);
+        var newExecutable = await vm.CheckForUpdateAsync(new Version(1, 1, 0), Executable);
 
-        Assert.True(restart);
+        Assert.Equal(Executable + ".new", newExecutable);
         var question = Assert.Single(_dialogs.Questions);
         Assert.Contains("1.2.0", question, StringComparison.Ordinal);
         Assert.Contains("1.1.0", question, StringComparison.Ordinal);
@@ -43,7 +43,7 @@ public class UpdateTests
 
         var restart = await CreateViewModel().CheckForUpdateAsync(new Version(1, 1, 0), Executable);
 
-        Assert.False(restart);
+        Assert.Null(restart);
         Assert.Single(_dialogs.Questions);
         Assert.Empty(_updates.Installed);
     }
@@ -53,7 +53,7 @@ public class UpdateTests
     {
         var restart = await CreateViewModel().CheckForUpdateAsync(new Version(1, 2, 0), Executable);
 
-        Assert.False(restart);
+        Assert.Null(restart);
         Assert.Empty(_dialogs.Questions);
     }
 
@@ -62,7 +62,7 @@ public class UpdateTests
     {
         var restart = await CreateViewModel().CheckForUpdateAsync(currentVersion: null, Executable);
 
-        Assert.False(restart);
+        Assert.Null(restart);
         Assert.Equal(0, _updates.Checks);
     }
 
@@ -73,7 +73,7 @@ public class UpdateTests
 
         var restart = await CreateViewModel().CheckForUpdateAsync(new Version(1, 1, 0), Executable);
 
-        Assert.False(restart);
+        Assert.Null(restart);
         Assert.Empty(_dialogs.Questions);
         Assert.Empty(_dialogs.Errors);
     }
@@ -87,7 +87,7 @@ public class UpdateTests
 
         var restart = await vm.CheckForUpdateAsync(new Version(1, 1, 0), Executable);
 
-        Assert.False(restart);
+        Assert.Null(restart);
         var error = Assert.Single(_dialogs.Errors);
         Assert.Contains(nameof(InvalidOperationException), error.Text, StringComparison.Ordinal);
         Assert.False(vm.IsUpdating);
@@ -111,7 +111,7 @@ public class UpdateTests
 
         var restart = await vm.CheckForUpdateAsync(new Version(1, 1, 0), Executable);
 
-        Assert.False(restart);
+        Assert.Null(restart);
         var error = Assert.Single(_dialogs.Errors);
         Assert.Contains("no permission", error.Text, StringComparison.Ordinal);
         Assert.Contains(Update.ReleaseUrl, error.Text, StringComparison.Ordinal);
