@@ -27,7 +27,8 @@ public static class TitleSanitizer
     /// <list type="number">
     /// <item>Invisible format characters (byte order mark U+FEFF, zero width space, direction marks, soft hyphen, ...)
     /// are removed, except the zero width (non-)joiner, which is part of the spelling in some scripts. All kinds of
-    /// quotation marks become <c>'</c>.</item>
+    /// quotation marks become <c>'</c>. Superscript, subscript and other special digits become normal digits
+    /// (<c>²</c> → <c>2</c>, <c>₃</c> → <c>3</c>, <c>①</c> → <c>1</c>); fractions like <c>½</c> are not digits.</item>
     /// <item><c>...</c> becomes <c>…</c>, all kinds of dashes (en dash <c>–</c>, em dash <c>—</c>, ...) become
     /// <c>-</c>.</item>
     /// <item><c>:</c> and <c>?</c> are removed.</item>
@@ -54,6 +55,10 @@ public static class TitleSanitizer
             else if (IsQuotationMark(rune))
             {
                 replaced.Append('\'');
+            }
+            else if (SpecialDigits(rune) is { } digits)
+            {
+                replaced.Append(digits);
             }
             else if (Rune.GetUnicodeCategory(rune) == UnicodeCategory.DashPunctuation)
             {
@@ -100,6 +105,21 @@ public static class TitleSanitizer
     private static bool IsRemovedFormatCharacter(Rune rune) =>
         Rune.GetUnicodeCategory(rune) == UnicodeCategory.Format
         && !(rune.IsBmp && KeptFormatCharacters.Contains((char)rune.Value, StringComparison.Ordinal));
+
+    /// <summary>
+    /// The normal digits of a number character that is not a decimal digit, e.g. <c>2</c> for <c>²</c>, or
+    /// <c>null</c> if it is no such character or does not stand for digits only (e.g. <c>½</c>, <c>⑴</c>).
+    /// </summary>
+    private static string? SpecialDigits(Rune rune)
+    {
+        if (Rune.GetUnicodeCategory(rune) != UnicodeCategory.OtherNumber)
+        {
+            return null;
+        }
+
+        var compatible = rune.ToString().Normalize(NormalizationForm.FormKC);
+        return compatible.All(char.IsAsciiDigit) ? compatible : null;
+    }
 
     private static bool IsQuotationMark(Rune rune) =>
         Rune.GetUnicodeCategory(rune) is UnicodeCategory.InitialQuotePunctuation

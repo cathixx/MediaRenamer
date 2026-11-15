@@ -45,6 +45,12 @@ public class TitleSanitizerTests
     [InlineData("A\tB", "A B")]
     [InlineData("A B", "A B")] // no-break space
     [InlineData("A   B", "A B")]
+    // superscript, subscript and other special digits become normal digits
+    [InlineData("E=mc²", "E_mc2")]
+    [InlineData("Teil³", "Teil3")]
+    [InlineData("⁰¹²³⁴⁵⁶⁷⁸⁹ ₀₁₂₃₄₅₆₇₈₉", "0123456789 0123456789")]
+    [InlineData("① ⑩", "1 10")]
+    [InlineData("½ ⑴ ⒈", "_ _ _")]
     // invisible format characters are removed, zero width (non-)joiners kept
     [InlineData("O \uFEFF X", "O X")] // Squid Game S02E06 on TMDB
     [InlineData("\uFEFFA\u200BB\u00AD\u200E\u2060", "AB")]
