@@ -96,6 +96,9 @@ Notes for AI agents working in this repository.
   Dependabot only rebases its PRs on conflicts, and for grouped multi-ecosystem PRs it did not react to
   `@dependabot rebase`. In that case merge the PR on GitHub with **"Squash and merge"**: GitHub signs that commit,
   whereas commits created by "Rebase and merge" (and "Update with rebase") are unsigned.
+- **Lost objects in the sandbox:** occasionally `git commit` fails with `invalid object ... Error building trees`: an
+  object written by `git add` did not arrive on the mounted workspace, and `git add` does not write it again. Fix:
+  `git hash-object -w <file>` for the named file, then commit again; `git fsck --no-dangling` should report nothing.
 - **Signatures:** All commits must be signed (`commit.gpgsign=true`).
 - **Setting up the GPG key in the sandbox:** In the sandbox container `commit.gpgsign=true` is set with
   `user.signingkey=D6FC8D086220A70A`, but the key is missing from the (freshly created) keyring. The private key is
