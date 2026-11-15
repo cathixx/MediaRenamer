@@ -71,16 +71,36 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    /// <summary>Starts the (updated) executable with the same arguments (UP-4).</summary>
+    /// <summary>
+    /// Starts the (updated) executable with the same arguments (UP-4): directly, and if that fails via the shell (like
+    /// a double click in the file manager).
+    /// </summary>
     private static void Restart(string executable)
     {
-        var start = new ProcessStartInfo(executable) { UseShellExecute = false };
+        try
+        {
+            Process.Start(StartInfo(executable, useShellExecute: false));
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine(e);
+            Process.Start(StartInfo(executable, useShellExecute: true));
+        }
+    }
+
+    private static ProcessStartInfo StartInfo(string executable, bool useShellExecute)
+    {
+        var start = new ProcessStartInfo(executable)
+        {
+            UseShellExecute = useShellExecute,
+            WorkingDirectory = Path.GetDirectoryName(executable) ?? Environment.CurrentDirectory,
+        };
         foreach (var argument in Environment.GetCommandLineArgs().Skip(1))
         {
             start.ArgumentList.Add(argument);
         }
 
-        Process.Start(start);
+        return start;
     }
 
     /// <summary>

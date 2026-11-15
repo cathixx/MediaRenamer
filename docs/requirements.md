@@ -266,7 +266,8 @@ The application updates itself from the [GitHub releases](https://github.com/cat
 | UP-2 | Only a release with a higher version than the running one and with a file for the current platform (`MediaRenamer-<runtime>.zip` / `.tar.gz`) counts as update. Local builds (version `0.0.0-snapshot`) never check for updates. |
 | UP-3 | The user is asked: "Version X is available (installed: Y). Update now?" with the buttons "Update now" and "Later". "Later" continues with the current version; the question comes again at the next start. |
 | UP-4 | "Update now": the file is downloaded and checked (size and SHA-256 checksum provided by GitHub), the executable is extracted and replaces the running one (the running file is renamed to `<name>.old`, which works on all platforms), then the application restarts with the same arguments. A message shows that the update is being installed; the controls are disabled meanwhile. A running rename is finished first. |
-| UP-5 | If installing fails (e.g. no write permission in the folder of the executable, download error, wrong checksum), an error is shown with the link to the release page, and the current version keeps running unchanged. |
+| UP-5 | If installing fails (e.g. no write permission in the folder of the executable, download error, wrong checksum, or any unexpected error), an error is shown with the details and the link to the release page, and the current version keeps running unchanged. |
+| UP-7 | If the new version can't be started automatically after the update (directly or via the shell), a message says that the update has been installed and asks the user to start the application again; then the application exits. |
 | UP-6 | At every start, a `<name>.old` file left by an update is deleted. |
 
 ## 11. Open questions
