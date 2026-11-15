@@ -8,8 +8,8 @@ Current state: hello-world skeleton, the actual functionality is not implemented
 
 ## Development
 
-Requirement: [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) in the version from `global.json` or a newer
-feature band of .NET 10 (e.g. `winget install Microsoft.DotNet.SDK.10`).
+Requirement: [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0) in the version from `global.json` or a newer
+feature band of .NET 11 (e.g. `winget install Microsoft.DotNet.SDK.11`).
 
 ```bash
 # build
@@ -20,7 +20,18 @@ dotnet run --project src/MediaRenamer -- "C:\Shows\Doctor Who"
 
 # run with a specific UI language
 dotnet run --project src/MediaRenamer -- --lang=de
+
+# run the tests
+dotnet test
 ```
+
+Project structure:
+
+| Project | Content |
+|---|---|
+| `src/MediaRenamer.Core` | Business logic without UI: folder and season detection, episode number recognition, naming, renaming |
+| `src/MediaRenamer` | Avalonia desktop application |
+| `tests/MediaRenamer.Core.Tests` | Tests of the business logic (xUnit v3) |
 
 ## Localization
 

@@ -66,14 +66,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # test: run the tests (they depend on the file system, e.g. case sensitivity)
           - os: windows-latest
             rid: win-x64
+            test: true
           - os: ubuntu-latest
             rid: linux-x64
+            test: true
           - os: macos-latest   # Apple Silicon runner
             rid: osx-arm64
-          - os: macos-latest   # Intel build, cross-compiled on the Apple Silicon runner
+            test: true
+          - os: macos-latest   # Intel build, cross-compiled on the Apple Silicon runner (tests already run above)
             rid: osx-x64
+            test: false
 
     steps:
       - name: Checkout
@@ -83,6 +88,10 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json  # same SDK version as for local builds
+
+      - name: Test
+        if: matrix.test
+        run: dotnet test --configuration Release
 
       - name: Publish
         shell: bash

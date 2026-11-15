@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Business logic without any UI dependency: folder and episode detection, naming, renaming. -->
+  <PropertyGroup>
+    <!-- the library is part of a trimmed single-file executable: enable the trim/AOT analyzers -->
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+</Project>

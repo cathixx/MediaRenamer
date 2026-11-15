@@ -19,12 +19,19 @@ Notes for AI agents working in this repository.
 - Cross-platform desktop application (Windows, Linux, macOS) that renames TV show video files based on TheMovieDB.
   Re-implementation of the JavaFX application in `../renamer` (current behavior: `../renamer/docs/funktionsumfang.md`,
   requirements for the re-implementation: section 11 there).
-- Stack: C# / .NET 10 (LTS) with [Avalonia UI](https://avaloniaui.net/). The deliverable is a standalone executable
+- Stack: C# / .NET 10 (LTS, built with the .NET 11 SDK) with [Avalonia UI](https://avaloniaui.net/). The deliverable is a standalone executable
   (self-contained, single file), no JAR and no runtime installation required for the user.
 - The SDK version is pinned in `global.json`; CI uses the same version. Avalonia's source generators need a
   recent compiler, so an older SDK fails with errors like `InitializeComponent does not exist`.
-- Solution: `MediaRenamer.sln`, application project: `src/MediaRenamer/MediaRenamer.csproj`.
-- Build: `dotnet build`. Run: `dotnet run --project src/MediaRenamer -- <folder> [<folder> ...]`.
+- Solution `MediaRenamer.sln` with these projects:
+  - `src/MediaRenamer.Core`: business logic without UI dependency (folder and season detection, episode number
+    recognition, naming, title cleaning, duplicate check, renaming). New business logic belongs here, with tests.
+  - `src/MediaRenamer`: the Avalonia desktop application.
+  - `tests/MediaRenamer.Core.Tests`: xUnit v3 tests of the core library; file system tests use `TempFolder`.
+- Common settings are in `Directory.Build.props`, all package versions in `Directory.Packages.props`
+  (central package management: `PackageReference` without `Version`).
+- Build: `dotnet build`. Test: `dotnet test` (runs on Microsoft.Testing.Platform, configured in `global.json`).
+  Run: `dotnet run --project src/MediaRenamer -- <folder> [<folder> ...]`.
 - Release build, e.g. Windows: `dotnet publish src/MediaRenamer -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`
   (other runtime IDs: `linux-x64`, `osx-x64`, `osx-arm64`).
 - Publishing trims and compresses the executable (`PublishTrimmed`, `EnableCompressionInSingleFile` in the csproj).
@@ -33,7 +40,7 @@ Notes for AI agents working in this repository.
   packages are removed from the publish output (target `RemovePackageDebugSymbolsFromPublish` in the csproj).
   A macOS `.app` bundle is not implemented yet.
 - CI: `.github/workflows/build.yml` ("Build & Release") publishes the executable for `win-x64`, `linux-x64`,
-  `osx-arm64` and `osx-x64`. Pull requests are only built (artifacts); pushes to `main` additionally create a tag and
+  `osx-arm64` and `osx-x64`, and runs the tests on Windows, Linux and macOS. Pull requests are only built (artifacts); pushes to `main` additionally create a tag and
   a public GitHub release with the next version number (changes only to `*.md`, `LICENSE`, `.idea/` or `.github/`
   don't create a release; use "Run workflow" to release manually).
 - Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
