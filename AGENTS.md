@@ -32,8 +32,10 @@ Notes for AI agents working in this repository.
 - The result of publishing is exactly one file on every platform. Debug symbols of native libraries shipped by
   packages are removed from the publish output (target `RemovePackageDebugSymbolsFromPublish` in the csproj).
   A macOS `.app` bundle is not implemented yet.
-- CI: `.github/workflows/build.yml` publishes the executable for `win-x64`, `linux-x64`, `osx-arm64` and `osx-x64`
-  on pushes to `main` and on pull requests and attaches them as artifacts. There is no release workflow yet.
+- CI: `.github/workflows/build.yml` ("Build & Release") publishes the executable for `win-x64`, `linux-x64`,
+  `osx-arm64` and `osx-x64`. Pull requests are only built (artifacts); pushes to `main` additionally create a tag and
+  a public GitHub release with the next version number (changes only to `*.md`, `LICENSE`, `.idea/` or `.github/`
+  don't create a release; use "Run workflow" to release manually).
 - Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
 - The application is started with folder paths as command line arguments (e.g. via the Windows "Send to" menu),
   see `Program.cs`.
@@ -47,6 +49,9 @@ Notes for AI agents working in this repository.
 - Changes may be **committed** without asking.
 - **Push only with explicit approval**, renewed for every single push. An earlier approval does not apply to later pushes.
   This also covers force pushes, tags and anything else that changes the state on GitHub.
+- Reason: every push to `main` automatically creates a public GitHub release via the workflow `Build & Release`.
+- `#minor` or `#major` in a commit message increases the release version accordingly (default: patch).
+  Only use these keywords when explicitly requested.
 
 ## Git workflow
 

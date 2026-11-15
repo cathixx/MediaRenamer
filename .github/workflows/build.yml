@@ -1,34 +1,64 @@
-name: Build
+name: Build & Release
 
-# Builds a standalone executable for every supported platform and attaches it to the run as artifact.
+# Pull requests: build only, the executables are attached to the run as artifacts.
+# Push to main: build with the next version number, then create the tag and a GitHub release with the executables.
 on:
   push:
     branches: [ main ]
-    # changes that don't affect the executable don't trigger a build
+    # changes that don't affect the executable don't create a release
     paths-ignore:
       - '**.md'
       - 'LICENSE'
       - '.idea/**'
-      - '.github/dependabot.yml'
+      - '.github/**'
   pull_request:
     branches: [ main ]
+    # workflow changes (e.g. Dependabot updates of actions) are still tested in PRs
     paths-ignore:
       - '**.md'
       - 'LICENSE'
       - '.idea/**'
   workflow_dispatch:
 
-# outdated builds of the same branch / PR are cancelled
+# Releases are queued so two pushes in quick succession can't compute the same version.
+# Outdated PR builds are cancelled instead.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
+  version:
+    name: Determine version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      # tag of the next release (e.g. v1.2.3); empty for pull requests and if the commit is already tagged
+      tag: ${{ steps.version.outputs.new_tag }}
+
+    steps:
+      - name: Checkout
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0     # full history + tags, needed to determine the next version
+
+      - name: Determine next version
+        id: version
+        if: github.event_name != 'pull_request'
+        uses: anothrNick/github-tag-action@1.75.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: patch  # use #minor or #major in the commit message for bigger steps
+          DRY_RUN: true        # only calculate, the tag is created together with the release
+
   build:
     name: Build ${{ matrix.rid }}
+    needs: version
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
 
@@ -56,17 +86,70 @@ jobs:
 
       - name: Publish
         shell: bash
-        run: >
-          dotnet publish src/MediaRenamer
-          --configuration Release
-          --runtime ${{ matrix.rid }}
-          --self-contained
-          -p:PublishSingleFile=true
-          --output publish
+        env:
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          version_args=()
+          if [ -n "$TAG" ]; then
+            version_args=("-p:Version=${TAG#v}")   # embedded into the executable (file and product version)
+          fi
+          dotnet publish src/MediaRenamer \
+            --configuration Release \
+            --runtime ${{ matrix.rid }} \
+            --self-contained \
+            -p:PublishSingleFile=true \
+            "${version_args[@]}" \
+            --output publish
+
+      # Windows: a .zip with MediaRenamer.exe.
+      # Linux/macOS: a .tar.gz with MediaRenamer, so the executable permission survives the download.
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist | Out-Null
+          Compress-Archive -Path publish/MediaRenamer.exe -DestinationPath dist/MediaRenamer-${{ matrix.rid }}.zip
+          Get-ChildItem dist
+
+      - name: Package (Linux, macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir dist
+          tar -czf dist/MediaRenamer-${{ matrix.rid }}.tar.gz -C publish MediaRenamer
+          ls -l dist
 
       - name: Upload executable
         uses: actions/upload-artifact@v7
         with:
           name: MediaRenamer-${{ matrix.rid }}
-          path: publish/
+          path: dist/*
           if-no-files-found: error
+
+  release:
+    name: Release
+    needs: [ version, build ]
+    # tag is empty for pull requests and if the commit is already tagged (e.g. manual re-run)
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.version.outputs.tag != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: write  # create tag and release
+
+    steps:
+      - name: Download executables
+        uses: actions/download-artifact@v8
+        with:
+          pattern: MediaRenamer-*
+          merge-multiple: true
+          path: dist
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Release ${{ needs.version.outputs.tag }}
+          generate_release_notes: true
+          files: dist/*
+          fail_on_unmatched_files: true

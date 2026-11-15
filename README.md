@@ -46,5 +46,23 @@ The result is placed in `src/MediaRenamer/bin/Release/net10.0/<runtime>/publish/
 The executable is trimmed and compressed (about 21 MB). Trimming removes code that is only used via reflection,
 so test the published executable after changes and fix trim warnings (they fail the build).
 
-The [Build](.github/workflows/build.yml) workflow builds the executables for all platforms on every push to `main`
-and on every pull request; they can be downloaded as artifacts of the workflow run.
+## Releases
+
+The [Build & Release](.github/workflows/build.yml) workflow builds the executables for all platforms:
+
+- every push to `main` (except changes to documentation and `.github/`) creates a new
+  [release](https://github.com/cathixx/MediaRenamer/releases) with the next version number. The patch version is
+  increased by default; `#minor` or `#major` in a commit message increases the minor or major version instead.
+- pull requests are only built; the executables can be downloaded as artifacts of the workflow run.
+
+Release assets:
+
+| Platform | File |
+|---|---|
+| Windows (x64) | `MediaRenamer-win-x64.zip` |
+| Linux (x64) | `MediaRenamer-linux-x64.tar.gz` |
+| macOS (Apple Silicon) | `MediaRenamer-osx-arm64.tar.gz` |
+| macOS (Intel) | `MediaRenamer-osx-x64.tar.gz` |
+
+The executables are not code-signed. Windows SmartScreen may warn on the first start ("More info" → "Run anyway").
+On macOS remove the quarantine flag after extracting: `xattr -d com.apple.quarantine MediaRenamer`.
