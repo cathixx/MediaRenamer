@@ -11,7 +11,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Title = $"Media Renamer   © cathixx   {AppInfo.DisplayVersion}";
+        VersionText.Text = $"© cathixx   {AppInfo.DisplayVersion}";
     }
 
     private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;

@@ -167,7 +167,7 @@ Triggered by selecting a result (languages and episodes) or changing the languag
 
 ## 6. User interface
 
-A single window, title `Media Renamer   © cathixx   <version>`. All texts are localized (English, German); the language
+A single window, title `Media Renamer`. All texts are localized (English, German); the language
 follows the operating system and can be set with `--lang=<culture>`.
 
 ### 6.1 Layout
@@ -180,7 +180,7 @@ follows the operating system and can be set with `--lang=<culture>`.
 | left | button "Rename" | starts renaming |
 | center | table | one row per video file |
 | right | image | poster of the selected show, at most 400 × 750, aspect ratio kept |
-| bottom | status bar | progress indicator and absolute path of the show folder |
+| bottom | status bar | progress indicator and absolute path of the show folder; on the right `© cathixx   <version>`, the version is `DEVELOP` for local builds |
 | | folder selection | choose or change the show folder (E-8) |
 
 ### 6.2 Table

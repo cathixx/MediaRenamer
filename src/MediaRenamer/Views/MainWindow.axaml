@@ -7,6 +7,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/icon.ico"
         Width="1600" Height="800" MinWidth="900" MinHeight="400"
+        Title="Media Renamer"
         WindowStartupLocation="CenterScreen">
 
   <Window.Resources>
@@ -60,10 +61,15 @@
     <!-- status bar -->
     <Border DockPanel.Dock="Bottom" Padding="8,4"
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,0,0">
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <ProgressBar IsIndeterminate="True" Width="80" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
-        <SelectableTextBlock Text="{Binding ShowPath}" VerticalAlignment="Center" />
-      </StackPanel>
+      <DockPanel>
+        <!-- copyright and version -->
+        <TextBlock x:Name="VersionText" DockPanel.Dock="Right" Opacity="0.7" Margin="16,0,0,0"
+                   VerticalAlignment="Center" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <ProgressBar IsIndeterminate="True" Width="80" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+          <SelectableTextBlock Text="{Binding ShowPath}" VerticalAlignment="Center" />
+        </StackPanel>
+      </DockPanel>
     </Border>
 
     <Grid ColumnDefinitions="300,*,Auto" Margin="8">
