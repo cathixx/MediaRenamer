@@ -45,6 +45,11 @@ public class TitleSanitizerTests
     [InlineData("A\tB", "A B")]
     [InlineData("A B", "A B")] // no-break space
     [InlineData("A   B", "A B")]
+    // invisible format characters are removed, zero width (non-)joiners kept
+    [InlineData("O \uFEFF X", "O X")] // Squid Game S02E06 on TMDB
+    [InlineData("\uFEFFA\u200BB\u00AD\u200E\u2060", "AB")]
+    [InlineData("می\u200Cخواهم", "می\u200Cخواهم")]
+    [InlineData("👨\u200D👩", "_\u200D_")]
     [InlineData("  A B  ", "A B")]
     [InlineData("A : B", "A B")]
     [InlineData("", "")]
