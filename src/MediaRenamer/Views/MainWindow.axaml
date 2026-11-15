@@ -46,9 +46,17 @@
       <Setter Property="Background" Value="#40D13438" />
     </Style>
 
+    <!-- panels (result list, table): a little lighter than the window in the dark theme -->
+    <Style Selector="Border.panel">
+      <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+
     <!-- result list: like the table, so the opened language selection stands out against it -->
     <Style Selector="ListBox.results">
-      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+      <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
       <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="4" />
@@ -67,7 +75,7 @@
 
   <DockPanel>
     <!-- status bar -->
-    <Border DockPanel.Dock="Bottom" Padding="8,4"
+    <Border DockPanel.Dock="Bottom" Padding="8,4" Background="{DynamicResource StatusBarBackground}"
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,0,0">
       <DockPanel>
         <!-- copyright and version -->
@@ -143,40 +151,44 @@
           </Border>
         </StackPanel>
 
-        <!-- table header -->
-        <Border DockPanel.Dock="Top" Padding="4,8,4,4"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,0,1">
-          <Grid ColumnDefinitions="32,48,*,*" ColumnSpacing="8">
-            <TextBlock Grid.Column="1" Text="{x:Static res:Strings.ColumnNumber}" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="2" Text="{x:Static res:Strings.ColumnOldName}" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="3" Text="{x:Static res:Strings.ColumnNewName}" FontWeight="SemiBold" />
-          </Grid>
-        </Border>
+        <!-- table -->
+        <Border Classes="panel" Margin="0,8,0,0">
+          <DockPanel>
+            <Border DockPanel.Dock="Top" Padding="4,8,4,4"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,0,1">
+              <Grid ColumnDefinitions="32,48,*,*" ColumnSpacing="8">
+                <TextBlock Grid.Column="1" Text="{x:Static res:Strings.ColumnNumber}" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="2" Text="{x:Static res:Strings.ColumnOldName}" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="3" Text="{x:Static res:Strings.ColumnNewName}" FontWeight="SemiBold" />
+              </Grid>
+            </Border>
 
-        <ScrollViewer IsEnabled="{Binding IsTableEnabled}">
-          <ItemsControl ItemsSource="{Binding Episodes}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="vm:EpisodeRowViewModel">
-                <Border Classes="row" Classes.seasonStart="{Binding StartsNewSeason}"
-                        Classes.conflict="{Binding IsConflict}">
-                  <Grid ColumnDefinitions="32,48,*,*" ColumnSpacing="8">
-                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" IsVisible="{Binding IsCheckboxVisible}"
-                              MinHeight="0" Padding="0" />
-                    <TextBlock Grid.Column="1" Text="{Binding NumberText}" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="2" Text="{Binding OldName}" VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OldName}" />
-                    <TextBlock Grid.Column="3" Text="{Binding NewNameText}" VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding NewNameText}"
-                               Classes.loading="{Binding IsLoading}"
-                               Classes.notFound="{Binding State, Converter={x:Static views:StateConverters.IsNotFound}}"
-                               Classes.caseOnly="{Binding State, Converter={x:Static views:StateConverters.IsCaseOnly}}"
-                               Classes.changed="{Binding State, Converter={x:Static views:StateConverters.IsChanged}}" />
-                  </Grid>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </ScrollViewer>
+            <ScrollViewer IsEnabled="{Binding IsTableEnabled}">
+              <ItemsControl ItemsSource="{Binding Episodes}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:EpisodeRowViewModel">
+                    <Border Classes="row" Classes.seasonStart="{Binding StartsNewSeason}"
+                            Classes.conflict="{Binding IsConflict}">
+                      <Grid ColumnDefinitions="32,48,*,*" ColumnSpacing="8">
+                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" IsVisible="{Binding IsCheckboxVisible}"
+                                  MinHeight="0" Padding="0" />
+                        <TextBlock Grid.Column="1" Text="{Binding NumberText}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Text="{Binding OldName}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OldName}" />
+                        <TextBlock Grid.Column="3" Text="{Binding NewNameText}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding NewNameText}"
+                                   Classes.loading="{Binding IsLoading}"
+                                   Classes.notFound="{Binding State, Converter={x:Static views:StateConverters.IsNotFound}}"
+                                   Classes.caseOnly="{Binding State, Converter={x:Static views:StateConverters.IsCaseOnly}}"
+                                   Classes.changed="{Binding State, Converter={x:Static views:StateConverters.IsChanged}}" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </DockPanel>
+        </Border>
       </DockPanel>
 
       <!-- right: poster -->

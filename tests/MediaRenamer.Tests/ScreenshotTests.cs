@@ -110,6 +110,8 @@ public sealed class ScreenshotTests : IDisposable
 
         // the same in the dark theme
         Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+        Dispatcher.UIThread.RunJobs();
+        window.CaptureRenderedFrame()!.Save(Path.Combine(output, "main-window-dark.png"), new PngBitmapEncoderOptions());
         languages.IsDropDownOpen = true;
         Dispatcher.UIThread.RunJobs();
         window.CaptureRenderedFrame()!.Save(Path.Combine(output, "main-window-languages-dark.png"),

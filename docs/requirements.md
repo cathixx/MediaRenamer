@@ -167,7 +167,7 @@ Triggered by selecting a result (languages and episodes) or changing the languag
 
 ## 6. User interface
 
-A single window, title `Media Renamer`. All texts are localized (English, German); the language
+A single window, title `Media Renamer`. It follows the light or dark mode of the operating system; the dark mode uses shades of gray, not black. All texts are localized (English, German); the language
 follows the operating system and can be set with `--lang=<culture>`.
 
 ### 6.1 Layout
