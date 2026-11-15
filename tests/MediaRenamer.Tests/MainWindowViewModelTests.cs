@@ -82,6 +82,46 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task ToolTip_ShowsTheTmdbEpisodes_OtherwiseTheName()
+    {
+        _client.Episodes[(EurekaId, "de-DE")] =
+        [
+            new TvEpisode(1, 1, "Pilot DE", "2006-07-18", "Eine Stadt voller Genies.", 44, 7.84, 12),
+            new TvEpisode(1, 2, ""),
+        ];
+        var vm = await OpenAsync("Staffel 01/S01E01E02.mkv", "Staffel 01/S01E03 - Old.mkv");
+
+        var doubleEpisode = vm.Episodes[0];
+        var details = Assert.IsType<EpisodeToolTipViewModel>(doubleEpisode.OldNameToolTip);
+        Assert.Same(details, doubleEpisode.NewNameToolTip);
+        Assert.Equal(2, details.Episodes.Count);
+        var pilot = details.Episodes[0];
+        Assert.Equal(Resources.Strings.EpisodeHeader(1, 1), pilot.Header);
+        Assert.Equal("Pilot DE", pilot.Title);
+        Assert.Equal(
+            [
+                Resources.Strings.AirDate(new DateOnly(2006, 7, 18)), Resources.Strings.Runtime(44),
+                Resources.Strings.Rating(7.84),
+            ],
+            pilot.Facts);
+        Assert.Equal("Eine Stadt voller Genies.", pilot.Overview);
+        var second = details.Episodes[1];
+        Assert.Equal(Resources.Strings.NoTitle, second.Title);
+        Assert.Empty(second.Facts);
+        Assert.False(second.HasOverview);
+
+        var notFound = vm.Episodes[1];
+        Assert.Null(notFound.Details);
+        Assert.Equal("S01E03 - Old", notFound.OldNameToolTip);
+        Assert.Equal(Resources.Strings.NotFound, notFound.NewNameToolTip);
+
+        vm.SearchTerm = string.Empty; // no show: the names again
+        await vm.PendingSearch;
+        Assert.Null(doubleEpisode.Details);
+        Assert.Equal("S01E01E02", doubleEpisode.OldNameToolTip);
+    }
+
+    [Fact]
     public async Task Open_NoPath_AsksForFolder()
     {
         var vm = CreateViewModel();

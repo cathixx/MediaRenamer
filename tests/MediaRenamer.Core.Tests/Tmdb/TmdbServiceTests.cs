@@ -187,6 +187,27 @@ public class TmdbServiceTests
     }
 
     [Fact]
+    public async Task EpisodeDetails()
+    {
+        var client = new FakeClient();
+        client.Seasons[7] = 1;
+        client.Episodes[(7, 1, "de")] =
+        [
+            new TvEpisode(1, 1, "Pilot", "2006-07-18", "A town of geniuses.", 44, 7.84, 12),
+            new TvEpisode(1, 2, "", "", " ", 0, 0, 0),
+            new TvEpisode(1, 3, null, "invalid"),
+        ];
+
+        var titles = await new TmdbService(client, ["de"]).GetEpisodeTitlesAsync(7, "de");
+
+        Assert.Equal(new EpisodeDetails(1, 1, "Pilot", new DateOnly(2006, 7, 18), 44, 7.84, "A town of geniuses."),
+            titles.GetEpisode(1, 1));
+        Assert.Equal(new EpisodeDetails(1, 2, null, null, null, null, null), titles.GetEpisode(1, 2));
+        Assert.Equal(new EpisodeDetails(1, 3, null, null, null, null, null), titles.GetEpisode(1, 3));
+        Assert.Null(titles.GetEpisode(1, 4));
+    }
+
+    [Fact]
     public async Task EpisodeTitles_CachedPerShowAndLanguage_FailureNotCached()
     {
         var client = new FakeClient { Fail = true };

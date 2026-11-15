@@ -30,7 +30,12 @@ public sealed record TvSeasonResponse(
 public sealed record TvEpisode(
     [property: JsonPropertyName("season_number")] int SeasonNumber,
     [property: JsonPropertyName("episode_number")] int EpisodeNumber,
-    [property: JsonPropertyName("name")] string? Name);
+    [property: JsonPropertyName("name")] string? Name,
+    [property: JsonPropertyName("air_date")] string? AirDate = null,
+    [property: JsonPropertyName("overview")] string? Overview = null,
+    [property: JsonPropertyName("runtime")] int? Runtime = null,
+    [property: JsonPropertyName("vote_average")] double VoteAverage = 0,
+    [property: JsonPropertyName("vote_count")] int VoteCount = 0);
 
 /// <summary>Response of <c>GET /3/tv/{id}/translations</c>.</summary>
 public sealed record TvTranslationsResponse(

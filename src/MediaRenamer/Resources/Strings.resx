@@ -42,4 +42,9 @@
   <data name="UpdateFailedHeader" xml:space="preserve"><value>The update failed</value></data>
   <data name="UpdateFailedFormat" xml:space="preserve"><value>{0}
 The current version keeps running. You can download the new version here: {1}</value></data>
+  <data name="EpisodeHeaderFormat" xml:space="preserve"><value>Season {0}, episode {1}</value></data>
+  <data name="NoTitle" xml:space="preserve"><value>(no title)</value></data>
+  <data name="AirDateFormat" xml:space="preserve"><value>First aired: {0}</value></data>
+  <data name="RuntimeFormat" xml:space="preserve"><value>Runtime: {0} min</value></data>
+  <data name="RatingFormat" xml:space="preserve"><value>Rating: {0:0.0}/10</value></data>
 </root>

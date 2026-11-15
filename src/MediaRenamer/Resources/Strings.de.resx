@@ -42,4 +42,9 @@
   <data name="UpdateFailedHeader" xml:space="preserve"><value>Das Update ist fehlgeschlagen</value></data>
   <data name="UpdateFailedFormat" xml:space="preserve"><value>{0}
 Die aktuelle Version läuft weiter. Die neue Version kann hier heruntergeladen werden: {1}</value></data>
+  <data name="EpisodeHeaderFormat" xml:space="preserve"><value>Staffel {0}, Episode {1}</value></data>
+  <data name="NoTitle" xml:space="preserve"><value>(kein Titel)</value></data>
+  <data name="AirDateFormat" xml:space="preserve"><value>Erstausstrahlung: {0}</value></data>
+  <data name="RuntimeFormat" xml:space="preserve"><value>Laufzeit: {0} Min.</value></data>
+  <data name="RatingFormat" xml:space="preserve"><value>Bewertung: {0:0.0}/10</value></data>
 </root>

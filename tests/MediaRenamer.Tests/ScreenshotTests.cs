@@ -26,6 +26,19 @@ public sealed class ScreenshotTests : IDisposable
 
     public void Dispose() => _temp.Dispose();
 
+    /// <summary>Opens the tool tip of the new name containing the text and saves the window with it.</summary>
+    private static void SaveToolTip(Window window, string newName, string path)
+    {
+        var cell = window.GetVisualDescendants().OfType<TextBlock>()
+            .First(t => t.Text?.Contains(newName, StringComparison.Ordinal) == true && t.Classes.Contains("changed"));
+        ToolTip.SetShouldUseOverlayLayer(cell, true);
+        ToolTip.SetIsOpen(cell, true);
+        Dispatcher.UIThread.RunJobs();
+        window.CaptureRenderedFrame()!.Save(path, new PngBitmapEncoderOptions());
+        ToolTip.SetIsOpen(cell, false);
+        Dispatcher.UIThread.RunJobs();
+    }
+
     [Fact(Explicit = true)]
     public void MainWindow()
     {
@@ -67,7 +80,10 @@ public sealed class ScreenshotTests : IDisposable
         ];
         client.Episodes[(1, "en-US")] =
         [
-            new TvEpisode(1, 1, "Pilot"), new TvEpisode(1, 2, "Many Happy Returns"),
+            new TvEpisode(1, 1, "Pilot"),
+            new TvEpisode(1, 2, "Many Happy Returns", "2006-07-25",
+                "When Sheriff Carter tries to find out why a woman who died years ago is back, Henry is caught up in "
+                + "the past.", 44, 7.2, 25),
             new TvEpisode(1, 3, "Before I Forget"), new TvEpisode(1, 4, "Dr. Kimbrough"),
             new TvEpisode(1, 5, "Invincible"), new TvEpisode(1, 6, "Blink"), new TvEpisode(1, 7, "Purple Haze"),
             new TvEpisode(2, 1, "Phoenix Rising"), new TvEpisode(2, 2, "Try, Try Again"),
@@ -108,6 +124,9 @@ public sealed class ScreenshotTests : IDisposable
             new PngBitmapEncoderOptions());
         languages.IsDropDownOpen = false;
 
+        // tool tip of a row with the TMDB episode, drawn into the window like the popup above
+        SaveToolTip(window, "Many Happy Returns", Path.Combine(output, "main-window-tooltip.png"));
+
         // the same in the dark theme
         Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
         Dispatcher.UIThread.RunJobs();
@@ -117,6 +136,7 @@ public sealed class ScreenshotTests : IDisposable
         window.CaptureRenderedFrame()!.Save(Path.Combine(output, "main-window-languages-dark.png"),
             new PngBitmapEncoderOptions());
         languages.IsDropDownOpen = false;
+        SaveToolTip(window, "Many Happy Returns", Path.Combine(output, "main-window-tooltip-dark.png"));
         var darkMessage = new MessageWindow("An unexpected error occurred", "Some error message");
         darkMessage.Show();
         Dispatcher.UIThread.RunJobs();

@@ -30,6 +30,11 @@ public static class Strings
     public static string Loading => Get(nameof(Loading));
     public static string NotFound => Get(nameof(NotFound));
     public static string Retry => Get(nameof(Retry));
+    public static string EpisodeHeader(int season, int episode) => Format("EpisodeHeaderFormat", season, episode);
+    public static string NoTitle => Get(nameof(NoTitle));
+    public static string AirDate(DateOnly date) => Format("AirDateFormat", date.ToString("d", CultureInfo.CurrentUICulture));
+    public static string Runtime(int minutes) => Format("RuntimeFormat", minutes);
+    public static string Rating(double rating) => Format("RatingFormat", rating);
     public static string Ok => Get(nameof(Ok));
     public static string ChooseShowFolder => Get(nameof(ChooseShowFolder));
     public static string NotAFolder(string value) => Format("NotAFolderFormat", value);

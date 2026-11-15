@@ -104,15 +104,24 @@ public sealed partial class TmdbService(ITmdbClient client, IReadOnlyList<string
         var seasons = await Task.WhenAll(Enumerable.Range(1, Math.Max(numberOfSeasons, 0))
             .Select(season => client.GetSeasonEpisodesAsync(showId, season, language))).ConfigureAwait(false);
 
-        var titles = new Dictionary<(int, int), string?>();
+        var episodes = new Dictionary<(int, int), EpisodeDetails>();
         foreach (var episode in seasons.SelectMany(s => s))
         {
-            titles.TryAdd((episode.SeasonNumber, episode.EpisodeNumber),
-                string.IsNullOrWhiteSpace(episode.Name) ? null : episode.Name);
+            episodes.TryAdd((episode.SeasonNumber, episode.EpisodeNumber), new EpisodeDetails(
+                episode.SeasonNumber,
+                episode.EpisodeNumber,
+                NullIfBlank(episode.Name),
+                DateOnly.TryParseExact(episode.AirDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None,
+                    out var airDate) ? airDate : null,
+                episode.Runtime is > 0 ? episode.Runtime : null,
+                episode.VoteCount > 0 ? episode.VoteAverage : null,
+                NullIfBlank(episode.Overview)));
         }
 
-        return new EpisodeTitles(titles);
+        return new EpisodeTitles(episodes);
     }
+
+    private static string? NullIfBlank(string? text) => string.IsNullOrWhiteSpace(text) ? null : text;
 
     /// <summary>Removes a year in parentheses at the end: <c>Doctor Who (2005)</c> → <c>Doctor Who</c> (T-6).</summary>
     internal static string RemoveYear(string name)

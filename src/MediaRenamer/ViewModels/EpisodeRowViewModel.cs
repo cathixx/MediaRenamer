@@ -45,7 +45,8 @@ public sealed partial class EpisodeRowViewModel(EpisodeFile file) : ObservableOb
 
     /// <summary>Current file name without extension.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(State), nameof(NewNameText), nameof(IsCheckboxVisible), nameof(IsRenameCandidate))]
+    [NotifyPropertyChangedFor(nameof(State), nameof(NewNameText), nameof(IsCheckboxVisible), nameof(IsRenameCandidate),
+        nameof(OldNameToolTip), nameof(NewNameToolTip))]
     public partial string OldName { get; private set; } = file.Name;
 
     /// <summary>Proposed file name without extension, or <c>null</c> if there is none.</summary>
@@ -88,22 +89,38 @@ public sealed partial class EpisodeRowViewModel(EpisodeFile file) : ObservableOb
     public bool IsRenameCandidate =>
         IsSelected && NewName is not null && !string.Equals(NewName, OldName, StringComparison.Ordinal);
 
+    /// <summary>The TMDB episodes of the file (two for a double episode), or <c>null</c> if TMDB does not know it.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OldNameToolTip), nameof(NewNameToolTip))]
+    public partial EpisodeToolTipViewModel? Details { get; private set; }
+
+    /// <summary>Tool tip of the old name: the TMDB episode if known, otherwise the name (6.2).</summary>
+    public object OldNameToolTip => (object?)Details ?? OldName;
+
+    /// <summary>Tool tip of the new name: the TMDB episode if known, otherwise the displayed text (6.2).</summary>
+    public object NewNameToolTip => (object?)Details ?? NewNameText;
+
     /// <summary>No show selected: no new name (T-15).</summary>
-    public void Clear() => Update(loading: false, newName: null, notFound: false);
+    public void Clear() => Update(loading: false, newName: null, notFound: false, details: null);
 
     /// <summary>The episode titles are being loaded.</summary>
-    public void SetLoading() => Update(loading: true, newName: null, notFound: false);
+    public void SetLoading() => Update(loading: true, newName: null, notFound: false, details: null);
 
     /// <summary>Sets the new name from the episode titles (T-13, T-14).</summary>
     public void SetTitles(EpisodeTitles titles)
     {
         if (titles.TryGetTitle(File.Season, File.Episodes.First, out var title))
         {
-            Update(loading: false, EpisodeNameBuilder.Build(File.Season, File.Episodes, title), notFound: false);
+            var episodes = File.Episodes.All
+                .Select(e => titles.GetEpisode(File.Season, e))
+                .OfType<EpisodeDetails>()
+                .ToList();
+            Update(loading: false, EpisodeNameBuilder.Build(File.Season, File.Episodes, title), notFound: false,
+                new EpisodeToolTipViewModel(episodes));
         }
         else
         {
-            Update(loading: false, newName: null, notFound: true);
+            Update(loading: false, newName: null, notFound: true, details: null);
         }
     }
 
@@ -115,15 +132,44 @@ public sealed partial class EpisodeRowViewModel(EpisodeFile file) : ObservableOb
         OldName = newName;
     }
 
-    private void Update(bool loading, string? newName, bool notFound)
+    private void Update(bool loading, string? newName, bool notFound, EpisodeToolTipViewModel? details)
     {
         _notFound = notFound;
         NewName = newName;
         IsLoading = loading;
+        Details = details;
         OnPropertyChanged(nameof(State));
         OnPropertyChanged(nameof(NewNameText));
         OnPropertyChanged(nameof(IsCheckboxVisible));
+        OnPropertyChanged(nameof(NewNameToolTip));
     }
+}
+
+/// <summary>Tool tip of a row: the TMDB information about the episodes of the file (6.2).</summary>
+public sealed class EpisodeToolTipViewModel(IReadOnlyList<EpisodeDetails> episodes)
+{
+    public IReadOnlyList<EpisodeInfoViewModel> Episodes { get; } = episodes.Select(e => new EpisodeInfoViewModel(e)).ToList();
+}
+
+/// <summary>An episode in the tool tip of a row.</summary>
+public sealed class EpisodeInfoViewModel(EpisodeDetails episode)
+{
+    /// <summary>Season and episode number, e.g. "Season 1, episode 2".</summary>
+    public string Header { get; } = Strings.EpisodeHeader(episode.Season, episode.Episode);
+
+    public string Title { get; } = episode.Title ?? Strings.NoTitle;
+
+    /// <summary>First broadcast, runtime and rating, as far as known.</summary>
+    public IReadOnlyList<string> Facts { get; } = new[]
+    {
+        episode.AirDate is { } airDate ? Strings.AirDate(airDate) : null,
+        episode.Runtime is { } runtime ? Strings.Runtime(runtime) : null,
+        episode.Rating is { } rating ? Strings.Rating(rating) : null,
+    }.OfType<string>().ToList();
+
+    public string? Overview { get; } = episode.Overview;
+
+    public bool HasOverview => Overview is not null;
 }
 
 /// <summary>A language offered for episode titles (6.1).</summary>

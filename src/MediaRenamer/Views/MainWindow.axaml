@@ -14,6 +14,33 @@
     <views:BytesToBitmapConverter x:Key="BytesToBitmap" />
   </Window.Resources>
 
+  <Window.DataTemplates>
+    <!-- tool tip of a table row: the episodes on TMDB (requirements 6.2) -->
+    <DataTemplate DataType="vm:EpisodeToolTipViewModel" x:DataType="vm:EpisodeToolTipViewModel">
+      <!-- not inherited from the cell (bold, italic, colored) -->
+      <ItemsControl ItemsSource="{Binding Episodes}"
+                    TextElement.FontWeight="Normal" TextElement.FontStyle="Normal"
+                    TextElement.Foreground="{DynamicResource ToolTipForeground}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="12" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:EpisodeInfoViewModel">
+            <StackPanel Spacing="2">
+              <TextBlock Text="{Binding Header}" Opacity="0.7" />
+              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <ItemsControl ItemsSource="{Binding Facts}" />
+              <TextBlock Text="{Binding Overview}" IsVisible="{Binding HasOverview}" TextWrapping="Wrap"
+                         Margin="0,6,0,0" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </DataTemplate>
+  </Window.DataTemplates>
+
   <Window.Styles>
     <!-- new file name (requirements 6.2) -->
     <Style Selector="TextBlock.loading">
@@ -174,9 +201,9 @@
                                   MinHeight="0" Padding="0" />
                         <TextBlock Grid.Column="1" Text="{Binding NumberText}" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2" Text="{Binding OldName}" VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OldName}" />
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OldNameToolTip}" />
                         <TextBlock Grid.Column="3" Text="{Binding NewNameText}" VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding NewNameText}"
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding NewNameToolTip}"
                                    Classes.loading="{Binding IsLoading}"
                                    Classes.notFound="{Binding State, Converter={x:Static views:StateConverters.IsNotFound}}"
                                    Classes.caseOnly="{Binding State, Converter={x:Static views:StateConverters.IsCaseOnly}}"

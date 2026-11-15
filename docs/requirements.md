@@ -195,6 +195,9 @@ follows the operating system and can be set with `--lang=<culture>`.
 
 - The columns are not sortable. The names are not editable, only the checkbox can be changed.
 - A separator line is shown exactly before the first displayed row of every further season.
+- Tool tip of the old and new file name: if TMDB knows the episode, its information in the selected language (both
+  episodes of a double episode): season and episode number, title, and as far as known the first air date, runtime,
+  rating and overview (from the season requests of T-12, no further requests). Otherwise the text of the cell.
 - Display of the column "new file name":
 
 | State | Display |
@@ -281,7 +284,8 @@ None.
 ## 12. Implementation status
 
 All sections are implemented. On Windows the application has been tested manually, including renaming and the
-self-update; on Linux and macOS only with automated tests and headless screenshots.
+self-update; on Linux and macOS only with automated tests and headless screenshots. The episode tool tip of the table (6.2)
+has not been tested manually yet.
 
 | Section | Code |
 |---|---|

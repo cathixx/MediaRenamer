@@ -77,14 +77,19 @@ public class TmdbClientTests
     {
         var (client, handler) = Create("""
             {"season_number":2,"episodes":[
-              {"season_number":2,"episode_number":1,"name":"Phoenix Rising"},
+              {"season_number":2,"episode_number":1,"name":"Phoenix Rising","air_date":"2007-07-10",
+               "overview":"Henry tries to save Kim.","runtime":44,"vote_average":7.5,"vote_count":10},
               {"season_number":2,"episode_number":2,"name":null}
             ]}
             """);
 
         var episodes = await client.GetSeasonEpisodesAsync(4620, 2, "de", TestContext.Current.CancellationToken);
 
-        Assert.Equal([new TvEpisode(2, 1, "Phoenix Rising"), new TvEpisode(2, 2, null)], episodes);
+        Assert.Equal(
+        [
+            new TvEpisode(2, 1, "Phoenix Rising", "2007-07-10", "Henry tries to save Kim.", 44, 7.5, 10),
+            new TvEpisode(2, 2, null),
+        ], episodes);
         Assert.Equal("https://api.themoviedb.org/3/tv/4620/season/2?language=de&api_key=secret-key",
             Assert.Single(handler.Requests).ToString());
     }
