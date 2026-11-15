@@ -18,8 +18,8 @@ Notes for AI agents working in this repository.
 - **Requirements: `docs/requirements.md`.** It is the reference for behavior and tests; requirement IDs (e.g. `D-5`)
   may be referenced in code and tests. Keep it up to date when behavior changes, including the open questions and
   the implementation status at the end.
-- Stack: C# / .NET 10 (LTS, built with the .NET 11 SDK) with [Avalonia UI](https://avaloniaui.net/). The deliverable is a standalone executable
-  (self-contained, single file), no runtime installation required for the user. The executables are intentionally
+- Stack: C# / .NET 10 (LTS, built with the .NET 11 SDK) with [Avalonia UI](https://avaloniaui.net/). The deliverable
+  is a standalone executable (self-contained, single file), no runtime installation required for the user. The executables are intentionally
   not code-signed (decided, see `docs/requirements.md` section 9); do not add code signing.
 - The SDK version is pinned in `global.json`; CI uses the same version. Avalonia's source generators need a
   recent compiler, so an older SDK fails with errors like `InitializeComponent does not exist`.
@@ -43,8 +43,8 @@ Notes for AI agents working in this repository.
   packages are removed from the publish output (target `RemovePackageDebugSymbolsFromPublish` in the csproj).
   A macOS `.app` bundle is not implemented yet.
 - CI: `.github/workflows/build.yml` ("Build & Release") publishes the executable for `win-x64`, `linux-x64`,
-  `osx-arm64` and `osx-x64`, and runs the tests on Windows, Linux and macOS. Pull requests are only built (artifacts); pushes to `main` additionally create a tag and
-  a public GitHub release with the next version number (changes only to `*.md`, `LICENSE`, `.idea/` or `.github/`
+  `osx-arm64` and `osx-x64`, and runs the tests on Windows, Linux and macOS. Pull requests are only built
+  (artifacts); pushes to `main` additionally create a tag and a public GitHub release with the next version number (changes only to `*.md`, `LICENSE`, `.idea/` or `.github/`
   don't create a release; use "Run workflow" to release manually).
 - Self-update (requirements section 10): `MediaRenamer.Core/Updates/UpdateService.cs` downloads the release file
   `MediaRenamer-<runtime>.zip`/`.tar.gz` and expects the executable at the top level of the archive. Keep the asset
@@ -67,18 +67,33 @@ Notes for AI agents working in this repository.
   with test data and saves PNGs: `SCREENSHOT_DIR=/tmp/shots dotnet test --project tests/MediaRenamer.Tests -- --explicit only`,
   then look at the images (`SCREENSHOT_CULTURE=de` for the German UI, which has longer texts). Do this after every
   visible change of the UI.
-- The application is started with folder paths as command line arguments (e.g. via the Windows "Send to" menu),
-  see `Program.cs`.
-- In the sandbox the .NET SDK is installed in `~/.dotnet` but is not on the `PATH`:
-  `export PATH=$HOME/.dotnet:$PATH`. There is no display, so the UI can only be checked with screenshots (see above).
+- The application is started with folder paths as command line arguments (e.g. via the Windows "Send to" menu) and
+  the options `--lang=`, `--theme=` (requirements E-11), see `Program.cs`.
+- **Sandbox setup** (a new sandbox has no .NET): install the SDK version from `global.json` and the .NET 10 runtime,
+  which the tests need (the SDK 11 only contains the .NET 11 runtime), into `~/.dotnet`, then put it on the `PATH`
+  in every command:
+
+  ```bash
+  curl -sSL -o /tmp/dotnet-install.sh https://dot.net/v1/dotnet-install.sh
+  bash /tmp/dotnet-install.sh --jsonfile global.json --install-dir ~/.dotnet
+  bash /tmp/dotnet-install.sh --channel 10.0 --runtime dotnet --install-dir ~/.dotnet
+  export PATH=$HOME/.dotnet:$PATH DOTNET_CLI_TELEMETRY_OPTOUT=1
+  ```
+
+  Network access needed (ask the maintainer to allow it): `dot.net`, `builds.dotnet.microsoft.com`, `api.nuget.org`
+  (build); `api.themoviedb.org`, `image.tmdb.org` (TMDB tests); `api.github.com`, `github.com`,
+  `release-assets.githubusercontent.com` (update tests, CI status); `productionresultssa*.blob.core.windows.net`
+  (CI job logs). There is no display, so the UI can only be checked with screenshots (see above).
+- **Images for the maintainer:** copy screenshots and previews into `out/` (ignored by git); the maintainer opens them
+  on the host as `C:\workspace\fobi\MediaRenamer\out\` and also puts own screenshots there.
 - All text files use LF line endings.
 - TMDB API key: locally in `.env` (ignored by git, template `.env.example`), in CI the repository secret
   `TMDB_API_KEY`. `src/MediaRenamer/EmbeddedTmdbApiKey.targets` embeds it at build time into the generated class
   `EmbeddedTmdbApiKey` (in `obj/`); at runtime the environment variable takes precedence. Never commit the key and
   never print it (also not from the generated file).
-- Tests against the real TMDB API are marked `Explicit` and need the key in the environment:
-  `set -a; . ./.env; set +a; dotnet test -- --explicit only`. The sandbox needs network access to
-  `api.themoviedb.org` and `image.tmdb.org`.
+- Tests against the real TMDB API and the real GitHub releases (self-update) are marked `Explicit`; the TMDB tests need
+  the key in the environment: `set -a; . ./.env; set +a; dotnet test -- --explicit only`. The `.env` file exists in
+  the workspace (it is shared with the host, but not part of the repository).
 
 ## Git
 
@@ -108,6 +123,8 @@ Notes for AI agents working in this repository.
 - **Lost objects in the sandbox:** occasionally `git commit` fails with `invalid object ... Error building trees`: an
   object written by `git add` did not arrive on the mounted workspace, and `git add` does not write it again. Fix:
   `git hash-object -w <file>` for the named file, then commit again; `git fsck --no-dangling` should report nothing.
+- **Author:** the sandbox has no git identity. Commit as the maintainer, without changing the git config:
+  `git -c user.name=cathixx -c user.email=61941427+cathixx@users.noreply.github.com commit ...`
 - **Signatures:** All commits must be signed (`commit.gpgsign=true`).
 - **Setting up the GPG key in the sandbox:** In the sandbox container `commit.gpgsign=true` is set with
   `user.signingkey=D6FC8D086220A70A`, but the key is missing from the (freshly created) keyring. The private key is

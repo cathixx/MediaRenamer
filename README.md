@@ -34,6 +34,17 @@ Download the executable from the [releases](https://github.com/cathixx/MediaRena
 asks at startup whether to install it, replaces the executable and restarts. The folder of the executable must be
 writable for this.
 
+### Command line
+
+```
+MediaRenamer [--lang=<culture>] [--theme=light|dark] [<folder> ...]
+```
+
+- `<folder>`: the show folder, or one or more season folders of a show.
+- `--lang=<culture>`: language of the user interface and default language of the episode titles, e.g. `--lang=de` or
+  `--lang=fr-FR` (default: the language of the operating system).
+- `--theme=light` or `--theme=dark`: theme (default: the light or dark mode of the operating system).
+
 ### Windows: "Send to" menu
 
 The most convenient way on Windows is the "Send to" menu of the Explorer:
@@ -117,7 +128,7 @@ dotnet publish src/MediaRenamer -c Release -r win-x64 --self-contained -p:Publis
 
 Other target platforms: `-r linux-x64`, `-r osx-x64`, `-r osx-arm64`.
 The result is placed in `src/MediaRenamer/bin/Release/net10.0/<runtime>/publish/`.
-The executable is trimmed and compressed (about 21 MB). Trimming removes code that is only used via reflection,
+The executable is trimmed and compressed (about 22 MB). Trimming removes code that is only used via reflection,
 so test the published executable after changes and fix trim warnings (they fail the build).
 
 ## Releases

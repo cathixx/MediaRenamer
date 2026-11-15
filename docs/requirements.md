@@ -46,6 +46,7 @@ one or more selected season folders (E-2).
 | E-8 | **Choosing a folder:** if no path is passed, the application starts without an error and lets the user choose a folder. The folder can also be changed at any time while the application is running. A chosen folder is handled like a single argument (E-1, E-2). |
 | E-9 | **Invalid arguments:** if the first argument is a file or does not exist, the application opens with a hint and the user can choose a folder (E-8). In season folder mode, arguments that are not season folders of the same show (no folder, not matching E-3, specials folder, different parent folder) are ignored and a hint names them. |
 | E-10 | If no season folder is found, a hint is shown and the user can choose another folder (E-8). |
+| E-11 | **Command line options** (arguments starting with `--` are never folder paths): `--lang=<culture>` sets the UI language and the start language of the episode titles (T-25), e.g. `--lang=de`, `--lang=fr-FR`; `--theme=light` or `--theme=dark` sets the theme (section 6); `--complete-update=<path>` and `--previous-process=<id>` are used internally by the self-update (UP-4). |
 
 ## 3. Video files and episode numbers
 
@@ -199,7 +200,7 @@ follows the operating system and can be set with `--lang=<culture>`.
 | State | Display |
 |---|---|
 | loading | "Loading...", italic, light gray |
-| no name found | "not found", italic, red |
+| no name found | `<not found>`, italic, red |
 | name differs only in case | dark blue |
 | name differs otherwise | bold |
 | name is identical | normal |
@@ -210,7 +211,7 @@ follows the operating system and can be set with `--lang=<culture>`.
 |---|---|
 | any background task is running | progress indicator visible, table and "Rename" disabled |
 | show search is running | additionally the result list is disabled |
-| renaming is running | additionally result list, search field and language selection are disabled |
+| renaming is running, or an update is being downloaded | additionally result list, search field, language selection and folder selection are disabled |
 | no file is selected **and** changeable | "Rename" disabled |
 | episode numbers conflict (R-1) | "Rename" disabled, the conflict is shown |
 
@@ -239,7 +240,10 @@ follows the operating system and can be set with `--lang=<culture>`.
 | TMDB request failed | visible in the UI | the application continues, a retry is possible (T-20) |
 | duplicate episode numbers | names or marks the affected files | renaming is disabled until resolved (R-1) |
 | files could not be renamed | "The following files could not be renamed: <file names>" | the application continues (R-7) |
-| unexpected error in a background task | "An unexpected error occurred" / technical message | the application continues |
+| update check failed (e.g. offline) | none, only logged | the application continues (UP-1) |
+| update could not be downloaded or verified | "The update failed" with the reason and the link to the release page | the current version continues (UP-5) |
+| new version could not replace the executable | "The update failed" with the reason | the new version continues (UP-7) |
+| unexpected error | "An unexpected error occurred" with message, type and stack trace (selectable, so it can be reported) | the application continues |
 
 ## 9. Constraints
 
