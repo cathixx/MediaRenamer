@@ -1,6 +1,6 @@
 version: 2
 
-# All updates (NuGet packages and GitHub Actions, including major versions) are combined into one weekly pull request
+# All updates (.NET SDK, NuGet packages and GitHub Actions, including major versions) are combined into one weekly pull request
 # with a single commit, so dependency updates create as few commits as possible.
 multi-ecosystem-groups:
   all-dependencies:
@@ -8,6 +8,12 @@ multi-ecosystem-groups:
       interval: "weekly"
 
 updates:
+  # .NET SDK version in global.json
+  - package-ecosystem: "dotnet-sdk"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+
   # NuGet packages of all projects
   - package-ecosystem: "nuget"
     directory: "/"

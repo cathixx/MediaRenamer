@@ -19,8 +19,10 @@ Notes for AI agents working in this repository.
 - Cross-platform desktop application (Windows, Linux, macOS) that renames TV show video files based on TheMovieDB.
   Re-implementation of the JavaFX application in `../renamer` (current behavior: `../renamer/docs/funktionsumfang.md`,
   requirements for the re-implementation: section 11 there).
-- Stack: C# / .NET 8 with [Avalonia UI](https://avaloniaui.net/). The deliverable is a standalone executable
+- Stack: C# / .NET 10 (LTS) with [Avalonia UI](https://avaloniaui.net/). The deliverable is a standalone executable
   (self-contained, single file), no JAR and no runtime installation required for the user.
+- The SDK version is pinned in `global.json`; CI uses the same version. Avalonia's source generators need a
+  recent compiler, so an older SDK fails with errors like `InitializeComponent does not exist`.
 - Solution: `MediaRenamer.sln`, application project: `src/MediaRenamer/MediaRenamer.csproj`.
 - Build: `dotnet build`. Run: `dotnet run --project src/MediaRenamer -- <folder> [<folder> ...]`.
 - Release build, e.g. Windows: `dotnet publish src/MediaRenamer -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`
@@ -31,7 +33,7 @@ Notes for AI agents working in this repository.
   the intended macOS deliverable is an `.app` bundle (not implemented yet).
 - CI: `.github/workflows/build.yml` publishes the executable for `win-x64`, `linux-x64`, `osx-arm64` and `osx-x64`
   on pushes to `main` and on pull requests and attaches them as artifacts. There is no release workflow yet.
-- Dependabot (`.github/dependabot.yml`) combines all NuGet and GitHub Actions updates into one weekly pull request.
+- Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
 - The application is started with folder paths as command line arguments (e.g. via the Windows "Send to" menu),
   see `Program.cs`.
 - In the sandbox the .NET SDK is installed in `~/.dotnet` but is not on the `PATH`:
