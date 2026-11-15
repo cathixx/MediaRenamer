@@ -55,6 +55,11 @@ Notes for AI agents working in this repository.
   vector description in `tests/MediaRenamer.Tests/IconGenerator.cs`; never edit them directly. After changing the icon:
   `SCREENSHOT_DIR=/tmp/shots dotnet test --project tests/MediaRenamer.Tests -- --explicit only --filter-class *IconGenerator`
   and check `/tmp/shots/icon-preview.png`.
+- **Executable for manual tests:** the maintainer tests the Windows executable from
+  `src/MediaRenamer/bin/Release/net10.0/win-x64/publish/MediaRenamer.exe` (the workspace is shared with the host).
+  After every change of the application, publish it again
+  (`dotnet publish src/MediaRenamer -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`) and check the
+  timestamp, otherwise an outdated executable is tested.
 - **Checking the UI without a display:** `ScreenshotTests` renders the windows headless (Avalonia.Headless with Skia)
   with test data and saves PNGs: `SCREENSHOT_DIR=/tmp/shots dotnet test --project tests/MediaRenamer.Tests -- --explicit only`,
   then look at the images. Do this after every visible change of the UI.
