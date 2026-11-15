@@ -16,8 +16,8 @@ public static class Strings
 
     private static string Get(string name) => Manager.GetString(name, CultureInfo.CurrentUICulture) ?? $"!{name}!";
 
-    private static string Format(string name, string value) =>
-        string.Format(CultureInfo.CurrentUICulture, Get(name), value);
+    private static string Format(string name, params object[] values) =>
+        string.Format(CultureInfo.CurrentUICulture, Get(name), values);
 
     public static string SearchPlaceholder => Get(nameof(SearchPlaceholder));
     public static string Language => Get(nameof(Language));
@@ -47,4 +47,13 @@ public static class Strings
     public static string TargetExists => Get(nameof(TargetExists));
     public static string MissingApiKeyHeader => Get(nameof(MissingApiKeyHeader));
     public static string MissingApiKeyText => Get(nameof(MissingApiKeyText));
+    public static string UpdateAvailableTitle => Get(nameof(UpdateAvailableTitle));
+    public static string UpdateAvailableHeader => Get(nameof(UpdateAvailableHeader));
+    public static string UpdateAvailable(string newVersion, string currentVersion) =>
+        Format("UpdateAvailableFormat", newVersion, currentVersion);
+    public static string UpdateNow => Get(nameof(UpdateNow));
+    public static string UpdateLater => Get(nameof(UpdateLater));
+    public static string Updating(string version) => Format("UpdatingFormat", version);
+    public static string UpdateFailedHeader => Get(nameof(UpdateFailedHeader));
+    public static string UpdateFailed(string error, string releaseUrl) => Format("UpdateFailedFormat", error, releaseUrl);
 }

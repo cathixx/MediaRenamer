@@ -33,4 +33,13 @@
   <data name="TargetExists" xml:space="preserve"><value>eine Datei mit dem neuen Namen existiert bereits</value></data>
   <data name="MissingApiKeyHeader" xml:space="preserve"><value>Kein API-Key für TheMovieDB vorhanden</value></data>
   <data name="MissingApiKeyText" xml:space="preserve"><value>Diese Version wurde ohne API-Key gebaut. Bitte einen eigenen TMDB-API-Key in der Umgebungsvariable TMDB_API_KEY hinterlegen.</value></data>
+  <data name="UpdateAvailableTitle" xml:space="preserve"><value>Update</value></data>
+  <data name="UpdateAvailableHeader" xml:space="preserve"><value>Eine neue Version ist verfügbar</value></data>
+  <data name="UpdateAvailableFormat" xml:space="preserve"><value>Version {0} ist verfügbar (installiert: {1}). Jetzt aktualisieren? Die Anwendung startet danach neu.</value></data>
+  <data name="UpdateNow" xml:space="preserve"><value>Jetzt aktualisieren</value></data>
+  <data name="UpdateLater" xml:space="preserve"><value>Später</value></data>
+  <data name="UpdatingFormat" xml:space="preserve"><value>Version {0} wird installiert…</value></data>
+  <data name="UpdateFailedHeader" xml:space="preserve"><value>Das Update ist fehlgeschlagen</value></data>
+  <data name="UpdateFailedFormat" xml:space="preserve"><value>{0}
+Die aktuelle Version läuft weiter. Die neue Version kann hier heruntergeladen werden: {1}</value></data>
 </root>

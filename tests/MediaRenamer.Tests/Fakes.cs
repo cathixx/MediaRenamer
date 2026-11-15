@@ -1,4 +1,5 @@
 using MediaRenamer.Core.Tmdb;
+using MediaRenamer.Core.Updates;
 using MediaRenamer.ViewModels;
 
 namespace MediaRenamer.Tests;
@@ -83,9 +84,48 @@ internal sealed class FakeDialogs : IDialogService
 {
     public List<(string Header, string Text)> Errors { get; } = [];
 
+    public List<string> Questions { get; } = [];
+
+    /// <summary>Answer to all questions.</summary>
+    public bool Confirm { get; set; }
+
+    public Task<bool> ConfirmAsync(string title, string header, string text, string yes, string no)
+    {
+        Questions.Add(text);
+        return Task.FromResult(Confirm);
+    }
+
     public Task ShowErrorAsync(string header, string text)
     {
         Errors.Add((header, text));
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class FakeUpdates : IUpdateService
+{
+    public AvailableUpdate? Update { get; set; }
+    public bool FailCheck { get; set; }
+    public bool FailInstall { get; set; }
+    public List<(AvailableUpdate Update, string ExecutablePath)> Installed { get; } = [];
+    public int Checks { get; private set; }
+
+    public Task<AvailableUpdate?> CheckAsync(Version currentVersion, CancellationToken cancellationToken = default)
+    {
+        Checks++;
+        return FailCheck
+            ? Task.FromException<AvailableUpdate?>(new UpdateException("offline"))
+            : Task.FromResult(Update is not null && Update.Version > currentVersion ? Update : null);
+    }
+
+    public Task InstallAsync(AvailableUpdate update, string executablePath, CancellationToken cancellationToken = default)
+    {
+        if (FailInstall)
+        {
+            return Task.FromException(new UpdateException("no permission"));
+        }
+
+        Installed.Add((update, executablePath));
         return Task.CompletedTask;
     }
 }

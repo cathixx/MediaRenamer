@@ -30,7 +30,9 @@ Eureka/
 3. Click "Rename". Existing files are never overwritten.
 
 Download the executable from the [releases](https://github.com/cathixx/MediaRenamer/releases), see
-[Releases](#releases) for the files.
+[Releases](#releases) for the files. Afterwards the application updates itself: when a new version is available, it
+asks at startup whether to install it, replaces the executable and restarts. The folder of the executable must be
+writable for this.
 
 ### Windows: "Send to" menu
 

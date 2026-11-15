@@ -24,6 +24,12 @@ internal static class Program
         }
 
         FolderArguments = args.Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToArray();
+
+        // remove the previous executable left by an update (UP-6)
+        if (Environment.ProcessPath is { } executable)
+        {
+            Core.Updates.UpdateService.CleanUp(executable);
+        }
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 

@@ -256,11 +256,24 @@ Not supported, among others: movies (only TV shows), data sources other than TMD
 renaming companion files (subtitles, `.nfo`), a configurable name format, manually editing the new name or the episode
 number, drag & drop, batch processing of several shows, operation without UI.
 
-## 10. Open questions
+## 10. Updates
+
+The application updates itself from the [GitHub releases](https://github.com/cathixx/MediaRenamer/releases).
+
+| ID | Requirement |
+|---|---|
+| UP-1 | After the show folder has been opened at startup, the application checks for the latest release (`GET https://api.github.com/repos/cathixx/MediaRenamer/releases/latest`). If the check fails (e.g. offline), nothing is shown; the error is only logged. |
+| UP-2 | Only a release with a higher version than the running one and with a file for the current platform (`MediaRenamer-<runtime>.zip` / `.tar.gz`) counts as update. Local builds (version `0.0.0-snapshot`) never check for updates. |
+| UP-3 | The user is asked: "Version X is available (installed: Y). Update now?" with the buttons "Update now" and "Later". "Later" continues with the current version; the question comes again at the next start. |
+| UP-4 | "Update now": the file is downloaded and checked (size and SHA-256 checksum provided by GitHub), the executable is extracted and replaces the running one (the running file is renamed to `<name>.old`, which works on all platforms), then the application restarts with the same arguments. A message shows that the update is being installed; the controls are disabled meanwhile. A running rename is finished first. |
+| UP-5 | If installing fails (e.g. no write permission in the folder of the executable, download error, wrong checksum), an error is shown with the link to the release page, and the current version keeps running unchanged. |
+| UP-6 | At every start, a `<name>.old` file left by an update is deleted. |
+
+## 11. Open questions
 
 None.
 
-## 11. Implementation status
+## 12. Implementation status
 
 All sections are implemented. The user interface has only been checked with automated tests and headless
 screenshots so far, not manually on every platform.
@@ -274,3 +287,4 @@ screenshots so far, not manually on every platform.
 | 6 User interface | `MediaRenamer/Views`, `MediaRenamer/ViewModels` |
 | 7 Renaming | `MediaRenamer.Core/Renaming`, `MediaRenamer/ViewModels/MainWindowViewModel.cs` |
 | 8 Error handling | `MediaRenamer/ViewModels/MainWindowViewModel.cs`, `MediaRenamer/Views/MessageWindow.axaml` |
+| 10 Updates | `MediaRenamer.Core/Updates`, `MediaRenamer/ViewModels/MainWindowViewModel.cs`, `MediaRenamer/App.axaml.cs` |

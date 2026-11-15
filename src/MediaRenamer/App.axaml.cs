@@ -3,7 +3,9 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using System.Diagnostics;
 using MediaRenamer.Core.Tmdb;
+using MediaRenamer.Core.Updates;
 using MediaRenamer.Resources;
 using MediaRenamer.ViewModels;
 using MediaRenamer.Views;
@@ -32,19 +34,42 @@ public partial class App : Application
             {
                 // T-25: episode titles in the language the application was started with, if available
                 var language = TmdbLanguages.FromCulture(CultureInfo.CurrentUICulture);
+                var httpClient = new HttpClient();
                 var window = new MainWindow();
                 var viewModel = new MainWindowViewModel(
-                    new TmdbService(new TmdbClient(new HttpClient(), apiKey), TmdbLanguages.SearchLanguages(language)),
+                    new TmdbService(new TmdbClient(httpClient, apiKey), TmdbLanguages.SearchLanguages(language)),
                     new DialogService(window),
-                    language);
+                    language,
+                    UpdateService.ForCurrentPlatform(httpClient));
                 window.DataContext = viewModel;
                 HandleUnexpectedErrors(viewModel);
-                window.Opened += async (_, _) => await viewModel.OpenAsync(Program.FolderArguments);
+                window.Opened += async (_, _) =>
+                {
+                    await viewModel.OpenAsync(Program.FolderArguments);
+                    var executable = Environment.ProcessPath;
+                    if (await viewModel.CheckForUpdateAsync(AppInfo.ReleaseVersion, executable))
+                    {
+                        Restart(executable!);
+                        desktop.Shutdown();
+                    }
+                };
                 desktop.MainWindow = window;
             }
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>Starts the (updated) executable with the same arguments (UP-4).</summary>
+    private static void Restart(string executable)
+    {
+        var start = new ProcessStartInfo(executable) { UseShellExecute = false };
+        foreach (var argument in Environment.GetCommandLineArgs().Skip(1))
+        {
+            start.ArgumentList.Add(argument);
+        }
+
+        Process.Start(start);
     }
 
     /// <summary>

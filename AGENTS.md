@@ -46,6 +46,10 @@ Notes for AI agents working in this repository.
   `osx-arm64` and `osx-x64`, and runs the tests on Windows, Linux and macOS. Pull requests are only built (artifacts); pushes to `main` additionally create a tag and
   a public GitHub release with the next version number (changes only to `*.md`, `LICENSE`, `.idea/` or `.github/`
   don't create a release; use "Run workflow" to release manually).
+- Self-update (requirements section 10): `MediaRenamer.Core/Updates/UpdateService.cs` downloads the release file
+  `MediaRenamer-<runtime>.zip`/`.tar.gz` and expects the executable at the top level of the archive. Keep the asset
+  names and the archive layout in `.github/workflows/build.yml` compatible, otherwise installed versions can no
+  longer update themselves.
 - Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
 - **Application icon:** `src/MediaRenamer/Assets/icon.svg`, `icon.ico` and `icon-256.png` are generated from the
   vector description in `tests/MediaRenamer.Tests/IconGenerator.cs`; never edit them directly. After changing the icon:

@@ -88,6 +88,13 @@ public sealed class ScreenshotTests : IDisposable
         message.Show();
         Dispatcher.UIThread.RunJobs();
         message.CaptureRenderedFrame()!.Save(Path.Combine(output, "message-window.png"), new PngBitmapEncoderOptions());
+
+        var question = new MessageWindow(Resources.Strings.UpdateAvailableTitle, Resources.Strings.UpdateAvailableHeader,
+            Resources.Strings.UpdateAvailable("1.2.0", "1.1.0"), Resources.Strings.UpdateNow,
+            Resources.Strings.UpdateLater);
+        question.Show();
+        Dispatcher.UIThread.RunJobs();
+        question.CaptureRenderedFrame()!.Save(Path.Combine(output, "update-window.png"), new PngBitmapEncoderOptions());
     }
 
     private static void Wait(Task task)

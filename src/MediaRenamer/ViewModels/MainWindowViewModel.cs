@@ -8,6 +8,7 @@ using MediaRenamer.Core.Folders;
 using MediaRenamer.Core.Naming;
 using MediaRenamer.Core.Renaming;
 using MediaRenamer.Core.Tmdb;
+using MediaRenamer.Core.Updates;
 using MediaRenamer.Resources;
 
 namespace MediaRenamer.ViewModels;
@@ -16,6 +17,9 @@ namespace MediaRenamer.ViewModels;
 public interface IDialogService
 {
     Task ShowErrorAsync(string header, string text);
+
+    /// <summary>Asks a question; returns whether the user chose <paramref name="yes"/>.</summary>
+    Task<bool> ConfirmAsync(string title, string header, string text, string yes, string no);
 }
 
 /// <summary>
@@ -30,6 +34,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly TmdbService _tmdb;
     private readonly IDialogService _dialogs;
+    private readonly IUpdateService? _updates;
     private CancellationTokenSource? _searchDelay;
     private bool _settingSearchTerm;
     private int _searchVersion;
@@ -44,10 +49,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="dialogs">Dialogs of the view.</param>
     /// <param name="preferredLanguage">TMDB language code of the language the application was started with, e.g.
     /// <c>de-DE</c>; the default language of the episode titles.</param>
-    public MainWindowViewModel(TmdbService tmdb, IDialogService dialogs, string preferredLanguage)
+    /// <param name="updates">Updates of the application, <c>null</c> to never check for updates.</param>
+    public MainWindowViewModel(TmdbService tmdb, IDialogService dialogs, string preferredLanguage,
+        IUpdateService? updates = null)
     {
         _tmdb = tmdb;
         _dialogs = dialogs;
+        _updates = updates;
         _preferredLanguage = preferredLanguage;
     }
 
@@ -119,15 +127,86 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(RenameCommand))]
     public partial bool IsRenaming { get; private set; }
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsTableEnabled), nameof(IsResultListEnabled),
+        nameof(IsSearchEnabled))]
+    [NotifyCanExecuteChangedFor(nameof(RenameCommand))]
+    public partial bool IsUpdating { get; private set; }
+
+    /// <summary>Shown while an update is installed (UP-4).</summary>
+    [ObservableProperty]
+    public partial string? UpdateMessage { get; private set; }
+
     /// <summary>Any background task is running: progress indicator visible (6.3).</summary>
-    public bool IsBusy => IsScanning || IsSearching || IsLoadingShow || IsRenaming;
+    public bool IsBusy => IsScanning || IsSearching || IsLoadingShow || IsRenaming || IsUpdating;
 
     public bool IsTableEnabled => !IsBusy;
 
-    public bool IsResultListEnabled => !IsSearching && !IsRenaming;
+    public bool IsResultListEnabled => !IsSearching && !IsRenaming && !IsUpdating;
 
-    /// <summary>Search field, language and folder selection are disabled while renaming.</summary>
-    public bool IsSearchEnabled => !IsRenaming;
+    /// <summary>Search field, language and folder selection are disabled while renaming or updating.</summary>
+    public bool IsSearchEnabled => !IsRenaming && !IsUpdating;
+
+    /// <summary>
+    /// Checks for a newer version and, after confirmation, installs it (section 10). Returns whether the application
+    /// has to be restarted to use the new version. Errors while checking are only logged; errors while installing are
+    /// shown and the current version keeps running.
+    /// </summary>
+    /// <param name="currentVersion">Version of the running application, <c>null</c> for local builds (no check).</param>
+    /// <param name="executablePath">Path of the running executable.</param>
+    public async Task<bool> CheckForUpdateAsync(Version? currentVersion, string? executablePath)
+    {
+        if (_updates is null || currentVersion is null || executablePath is null)
+        {
+            return false;
+        }
+
+        AvailableUpdate? update;
+        try
+        {
+            update = await _updates.CheckAsync(currentVersion);
+        }
+        catch (UpdateException e)
+        {
+            Console.Error.WriteLine(e.Message); // UP-1: e.g. offline, not worth a message
+            return false;
+        }
+
+        if (update is null
+            || !await _dialogs.ConfirmAsync(Strings.UpdateAvailableTitle, Strings.UpdateAvailableHeader,
+                Strings.UpdateAvailable(Format(update.Version), Format(currentVersion)), Strings.UpdateNow,
+                Strings.UpdateLater))
+        {
+            return false;
+        }
+
+        // a running rename is finished first
+        while (IsRenaming)
+        {
+            await Task.Delay(100);
+        }
+
+        IsUpdating = true;
+        UpdateMessage = Strings.Updating(Format(update.Version));
+        try
+        {
+            await _updates.InstallAsync(update, executablePath);
+            return true;
+        }
+        catch (UpdateException e)
+        {
+            Console.Error.WriteLine(e);
+            await _dialogs.ShowErrorAsync(Strings.UpdateFailedHeader, Strings.UpdateFailed(e.Message, update.ReleaseUrl));
+            return false;
+        }
+        finally
+        {
+            IsUpdating = false;
+            UpdateMessage = null;
+        }
+    }
+
+    private static string Format(Version version) => version.ToString(3);
 
     /// <summary>Opens the show given by the start arguments or a chosen folder (section 2).</summary>
     public async Task OpenAsync(IReadOnlyList<string> paths)

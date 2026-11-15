@@ -99,6 +99,9 @@
       <!-- center: messages and table -->
       <DockPanel Grid.Column="1" Margin="8,0">
         <StackPanel DockPanel.Dock="Top" Spacing="4">
+          <Border Classes="message" IsVisible="{Binding UpdateMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock Text="{Binding UpdateMessage}" TextWrapping="Wrap" />
+          </Border>
           <Border Classes="message" IsVisible="{Binding FolderMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
             <TextBlock Text="{Binding FolderMessage}" TextWrapping="Wrap" />
           </Border>
