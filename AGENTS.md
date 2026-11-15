@@ -62,7 +62,8 @@ Notes for AI agents working in this repository.
   timestamp, otherwise an outdated executable is tested.
 - **Checking the UI without a display:** `ScreenshotTests` renders the windows headless (Avalonia.Headless with Skia)
   with test data and saves PNGs: `SCREENSHOT_DIR=/tmp/shots dotnet test --project tests/MediaRenamer.Tests -- --explicit only`,
-  then look at the images. Do this after every visible change of the UI.
+  then look at the images (`SCREENSHOT_CULTURE=de` for the German UI, which has longer texts). Do this after every
+  visible change of the UI.
 - The application is started with folder paths as command line arguments (e.g. via the Windows "Send to" menu),
   see `Program.cs`.
 - In the sandbox the .NET SDK is installed in `~/.dotnet` but is not on the `PATH`:

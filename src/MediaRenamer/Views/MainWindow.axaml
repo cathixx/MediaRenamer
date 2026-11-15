@@ -104,9 +104,16 @@
               <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="{DynamicResource SystemAccentColor}" />
               <Thickness x:Key="ComboBoxDropdownBorderThickness">2</Thickness>
             </ComboBox.Resources>
+            <!-- not virtualized: all languages are measured at once, so the opened list keeps its width (the width of
+                 the longest name) while scrolling; there are at most a few dozen languages -->
+            <ComboBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel />
+              </ItemsPanelTemplate>
+            </ComboBox.ItemsPanel>
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:LanguageOption">
-                <TextBlock Text="{Binding DisplayName}" />
+                <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>

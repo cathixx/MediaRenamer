@@ -17,7 +17,8 @@ namespace MediaRenamer.Tests;
 /// <summary>
 /// Renders the windows without a display and saves them as PNG, to check the layout without starting the
 /// application. Run on request: <c>dotnet test -- --explicit only --filter-class *ScreenshotTests</c>.
-/// The images are written to the folder in the environment variable <c>SCREENSHOT_DIR</c> (default: temp folder).
+/// The images are written to the folder in the environment variable <c>SCREENSHOT_DIR</c> (default: temp folder),
+/// the UI language can be set with <c>SCREENSHOT_CULTURE</c> (default: <c>en</c>).
 /// </summary>
 public sealed class ScreenshotTests : IDisposable
 {
@@ -62,6 +63,7 @@ public sealed class ScreenshotTests : IDisposable
             new TvTranslation("it", "IT", "Italian"), new TvTranslation("nl", "NL", "Dutch"),
             new TvTranslation("pl", "PL", "Polish"), new TvTranslation("sv", "SE", "Swedish"),
             new TvTranslation("cs", "CZ", "Czech"), new TvTranslation("hu", "HU", "Hungarian"),
+            new TvTranslation("zh", "HK", "Mandarin"), new TvTranslation("zh", "TW", "Mandarin"),
         ];
         client.Episodes[(1, "en-US")] =
         [
@@ -71,7 +73,9 @@ public sealed class ScreenshotTests : IDisposable
             new TvEpisode(2, 1, "Phoenix Rising"), new TvEpisode(2, 2, "Try, Try Again"),
         ];
 
-        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en");
+        // UI language of the screenshots: SCREENSHOT_CULTURE, e.g. "de" (default: English)
+        CultureInfo.CurrentUICulture =
+            CultureInfo.GetCultureInfo(Environment.GetEnvironmentVariable("SCREENSHOT_CULTURE") ?? "en");
         AppBuilder.Configure<App>()
             .UseSkia()
             .WithInterFont()
