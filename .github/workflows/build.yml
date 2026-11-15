@@ -1,0 +1,72 @@
+name: Build
+
+# Builds a standalone executable for every supported platform and attaches it to the run as artifact.
+on:
+  push:
+    branches: [ main ]
+    # changes that don't affect the executable don't trigger a build
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.idea/**'
+      - '.github/dependabot.yml'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.idea/**'
+  workflow_dispatch:
+
+# outdated builds of the same branch / PR are cancelled
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-latest   # Apple Silicon runner
+            rid: osx-arm64
+          - os: macos-latest   # Intel build, cross-compiled on the Apple Silicon runner
+            rid: osx-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish
+        shell: bash
+        run: >
+          dotnet publish src/MediaRenamer
+          --configuration Release
+          --runtime ${{ matrix.rid }}
+          --self-contained
+          -p:PublishSingleFile=true
+          --output publish
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: MediaRenamer-${{ matrix.rid }}
+          path: publish/
+          if-no-files-found: error

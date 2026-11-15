@@ -8,6 +8,23 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
+  <!-- Single-file publish (dotnet publish -p:PublishSingleFile=true): bundle the native libraries (Skia, HarfBuzz, ...)
+       and the debug symbols into the executable, so the result is exactly one file. -->
+  <PropertyGroup>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <!-- Size of the self-contained executable (win-x64: 86 MB -> 19 MB):
+       - trimming removes unused code of the bundled .NET runtime and libraries. Code that is only reached via
+         reflection may be removed as well, so trim warnings must be treated as errors and fixed, not ignored.
+       - compression shrinks the bundled assemblies; they are decompressed in memory at startup. -->
+  <PropertyGroup>
+    <PublishTrimmed>true</PublishTrimmed>
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.0" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.0" />

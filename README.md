@@ -12,7 +12,7 @@ Requirement: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```bash
 # build
-dotnet build src/MediaRenamer
+dotnet build
 
 # run, optionally with folder paths as arguments
 dotnet run --project src/MediaRenamer -- "C:\Shows\Doctor Who"
@@ -42,3 +42,9 @@ dotnet publish src/MediaRenamer -c Release -r win-x64 --self-contained -p:Publis
 
 Other target platforms: `-r linux-x64`, `-r osx-x64`, `-r osx-arm64`.
 The result is placed in `src/MediaRenamer/bin/Release/net8.0/<runtime>/publish/`.
+The executable is trimmed and compressed (about 18 MB). Trimming removes code that is only used via reflection,
+so test the published executable after changes and fix trim warnings (they fail the build).
+On macOS the native libraries (`*.dylib`) are placed next to the executable and have to be shipped with it.
+
+The [Build](.github/workflows/build.yml) workflow builds the executables for all platforms on every push to `main`
+and on every pull request; they can be downloaded as artifacts of the workflow run.

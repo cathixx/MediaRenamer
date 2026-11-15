@@ -21,10 +21,17 @@ Notes for AI agents working in this repository.
   requirements for the re-implementation: section 11 there).
 - Stack: C# / .NET 8 with [Avalonia UI](https://avaloniaui.net/). The deliverable is a standalone executable
   (self-contained, single file), no JAR and no runtime installation required for the user.
-- Project: `src/MediaRenamer/MediaRenamer.csproj`.
-- Build: `dotnet build src/MediaRenamer`. Run: `dotnet run --project src/MediaRenamer -- <folder> [<folder> ...]`.
+- Solution: `MediaRenamer.sln`, application project: `src/MediaRenamer/MediaRenamer.csproj`.
+- Build: `dotnet build`. Run: `dotnet run --project src/MediaRenamer -- <folder> [<folder> ...]`.
 - Release build, e.g. Windows: `dotnet publish src/MediaRenamer -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`
   (other runtime IDs: `linux-x64`, `osx-x64`, `osx-arm64`).
+- Publishing trims and compresses the executable (`PublishTrimmed`, `EnableCompressionInSingleFile` in the csproj).
+  Trim warnings are errors: fix them (e.g. avoid reflection, use compiled bindings), never suppress them blindly.
+- On macOS the native libraries (`*.dylib`) are not bundled into the single file but placed next to it;
+  the intended macOS deliverable is an `.app` bundle (not implemented yet).
+- CI: `.github/workflows/build.yml` publishes the executable for `win-x64`, `linux-x64`, `osx-arm64` and `osx-x64`
+  on pushes to `main` and on pull requests and attaches them as artifacts. There is no release workflow yet.
+- Dependabot (`.github/dependabot.yml`) combines all NuGet and GitHub Actions updates into one weekly pull request.
 - The application is started with folder paths as command line arguments (e.g. via the Windows "Send to" menu),
   see `Program.cs`.
 - In the sandbox the .NET SDK is installed in `~/.dotnet` but is not on the `PATH`:
