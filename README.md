@@ -3,7 +3,7 @@
 Cross-platform desktop tool (Windows, Linux, macOS) that renames locally stored TV show episodes consistently,
 using episode titles from [TheMovieDB](https://www.themoviedb.org/).
 
-This is a re-implementation of a JavaFX application in C# / .NET with [Avalonia UI](https://avaloniaui.net/).
+Built with C# / .NET and [Avalonia UI](https://avaloniaui.net/).
 The behavior is specified in [docs/requirements.md](docs/requirements.md).
 
 ## Usage
@@ -130,5 +130,6 @@ Release assets:
 | macOS (Apple Silicon) | `MediaRenamer-osx-arm64.tar.gz` |
 | macOS (Intel) | `MediaRenamer-osx-x64.tar.gz` |
 
-The executables are not code-signed. Windows SmartScreen may warn on the first start ("More info" → "Run anyway").
+The executables are intentionally not code-signed. Windows SmartScreen may warn on the first start
+("More info" → "Run anyway").
 On macOS remove the quarantine flag after extracting: `xattr -d com.apple.quarantine MediaRenamer`.

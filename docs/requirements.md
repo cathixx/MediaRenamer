@@ -1,7 +1,6 @@
 # Requirements
 
 This document describes how MediaRenamer behaves. It is the reference for the implementation and the tests.
-MediaRenamer is a re-implementation of an earlier JavaFX application; its behavior is kept unless stated otherwise.
 Each requirement has an ID (e.g. `D-5`) that code comments and tests may refer to.
 
 ## 1. Purpose
@@ -245,6 +244,7 @@ follows the operating system and can be set with `--lang=<culture>`.
 |---|---|
 | Platforms | Windows, Linux and macOS (x64 and Apple Silicon). Main use is on Windows. |
 | Delivery | a single standalone executable per platform, no runtime installation needed |
+| Code signing | none. The executables are intentionally not code-signed; Windows SmartScreen and macOS Gatekeeper warn on the first start. |
 | Configuration | none. Nothing is stored: no settings, no window state, no history. |
 | Logging | console; every rename is logged as `rename 'old' -> 'new'` |
 | Versioning | every push to `main` creates a release with the next version number (patch; `#minor`/`#major` in the commit message) |
