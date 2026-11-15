@@ -1,7 +1,11 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
+using Avalonia.VisualTree;
 using Avalonia.Media.Imaging;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using MediaRenamer.Core.Tests;
 using MediaRenamer.Core.Tmdb;
@@ -54,6 +58,10 @@ public sealed class ScreenshotTests : IDisposable
         [
             new TvTranslation("en", "US", "English"), new TvTranslation("de", "DE", "German"),
             new TvTranslation("fr", "FR", "French"), new TvTranslation("pt", "BR", "Portuguese"),
+            new TvTranslation("es", "ES", "Spanish"), new TvTranslation("es", "MX", "Spanish"),
+            new TvTranslation("it", "IT", "Italian"), new TvTranslation("nl", "NL", "Dutch"),
+            new TvTranslation("pl", "PL", "Polish"), new TvTranslation("sv", "SE", "Swedish"),
+            new TvTranslation("cs", "CZ", "Czech"), new TvTranslation("hu", "HU", "Hungarian"),
         ];
         client.Episodes[(1, "en-US")] =
         [
@@ -82,6 +90,29 @@ public sealed class ScreenshotTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
         window.CaptureRenderedFrame()!.Save(Path.Combine(output, "main-window.png"), new PngBitmapEncoderOptions());
+
+        // the language selection opened above the result list; the popup is drawn into the window for the screenshot
+        var languages = window.GetVisualDescendants().OfType<ComboBox>().Single();
+        foreach (var popup in languages.GetVisualDescendants().OfType<Popup>())
+        {
+            popup.ShouldUseOverlayLayer = true;
+        }
+
+        languages.IsDropDownOpen = true;
+        Dispatcher.UIThread.RunJobs();
+        window.CaptureRenderedFrame()!.Save(Path.Combine(output, "main-window-languages.png"),
+            new PngBitmapEncoderOptions());
+        languages.IsDropDownOpen = false;
+
+        // the same in the dark theme
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+        languages.IsDropDownOpen = true;
+        Dispatcher.UIThread.RunJobs();
+        window.CaptureRenderedFrame()!.Save(Path.Combine(output, "main-window-languages-dark.png"),
+            new PngBitmapEncoderOptions());
+        languages.IsDropDownOpen = false;
+        Application.Current.RequestedThemeVariant = ThemeVariant.Light;
+        Dispatcher.UIThread.RunJobs();
 
         var message = new MessageWindow("An error occurred",
             "The following files could not be renamed:\nS01E01.mkv: a file with the new name already exists");

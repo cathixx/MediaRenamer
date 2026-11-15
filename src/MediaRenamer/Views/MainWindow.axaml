@@ -46,6 +46,14 @@
       <Setter Property="Background" Value="#40D13438" />
     </Style>
 
+    <!-- result list: like the table, so the opened language selection stands out against it -->
+    <Style Selector="ListBox.results">
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+
     <!-- message bars -->
     <Style Selector="Border.message">
       <Setter Property="CornerRadius" Value="4" />
@@ -79,7 +87,7 @@
                 IsEnabled="{Binding IsSearchEnabled}" Click="OnChooseFolder" />
         <TextBox Grid.Row="1" Text="{Binding SearchTerm}" PlaceholderText="{x:Static res:Strings.SearchPlaceholder}"
                  IsEnabled="{Binding IsSearchEnabled}" />
-        <ListBox Grid.Row="2" ItemsSource="{Binding SearchResults}" SelectedItem="{Binding SelectedShow}"
+        <ListBox Grid.Row="2" Classes="results" ItemsSource="{Binding SearchResults}" SelectedItem="{Binding SelectedShow}"
                  SelectionMode="Single" IsEnabled="{Binding IsResultListEnabled}">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:ShowItemViewModel">
@@ -91,6 +99,11 @@
           <TextBlock Text="{x:Static res:Strings.Language}" />
           <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}"
                     HorizontalAlignment="Stretch" IsEnabled="{Binding IsSearchEnabled}">
+            <ComboBox.Resources>
+              <!-- a clearly visible border, so the opened list is distinguishable from the result list below -->
+              <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="{DynamicResource SystemAccentColor}" />
+              <Thickness x:Key="ComboBoxDropdownBorderThickness">2</Thickness>
+            </ComboBox.Resources>
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:LanguageOption">
                 <TextBlock Text="{Binding DisplayName}" />
