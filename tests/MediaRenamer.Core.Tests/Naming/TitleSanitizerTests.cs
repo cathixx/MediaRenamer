@@ -8,18 +8,18 @@ public class TitleSanitizerTests
     // examples from the requirements
     [InlineData("AC/DC", "AC_DC")]
     [InlineData("Say \"Hi\"", "Say 'Hi'")]
-    [InlineData("Stop!", "Stop")]
+    [InlineData("Stop!", "Stop!")]
     [InlineData("Teil 1: Der Anfang", "Teil 1 Der Anfang")]
     [InlineData("Was nun?", "Was nun")]
     [InlineData("Dr. House & Co.", "Dr. House & Co.")]
-    // exclamation marks: removed at the end, otherwise replaced
-    [InlineData("Go! Go!", "Go_ Go")]
-    [InlineData("Help!!!", "Help")]
-    [InlineData("Help ! ! ", "Help")]
-    [InlineData("Really?!", "Really")]
-    [InlineData("Really!?", "Really")]
-    [InlineData("Yes!!! No", "Yes___ No")]
-    [InlineData("!!!", "")]
+    // exclamation marks are kept, question marks removed
+    [InlineData("Go! Go!", "Go! Go!")]
+    [InlineData("Help!!!", "Help!!!")]
+    [InlineData("Help ! ! ", "Help ! !")]
+    [InlineData("Really?!", "Really!")]
+    [InlineData("Really!?", "Really!")]
+    [InlineData("Yes!!! No", "Yes!!! No")]
+    [InlineData("!!!", "!!!")]
     // all kinds of quotation marks
     [InlineData("It's", "It's")]
     [InlineData("It’s ‘a’ “b” „c“ «d» ‹e› ‚f‘", "It's 'a' 'b' 'c' 'd' 'e' 'f'")]
@@ -34,7 +34,8 @@ public class TitleSanitizerTests
     [InlineData("A-B.C,D'E&F(G)H…", "A-B.C,D'E&F(G)H…")]
     // characters forbidden on Windows and other special characters
     [InlineData("a<b>c|d*e\\f", "a_b_c_d_e_f")]
-    [InlineData("100% #1 @home", "100_ _1 _home")]
+    [InlineData("100% #1 @home", "100% #1 _home")]
+    [InlineData("Episode #42", "Episode #42")]
     [InlineData("A + B = C", "A _ B _ C")]
     // letters and digits of all kinds are kept
     [InlineData("Ärger über Öl, Straße", "Ärger über Öl, Straße")]
