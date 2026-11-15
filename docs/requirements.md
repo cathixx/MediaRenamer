@@ -276,8 +276,8 @@ None.
 
 ## 12. Implementation status
 
-All sections are implemented. The user interface has only been checked with automated tests and headless
-screenshots so far, not manually on every platform.
+All sections are implemented. On Windows the application has been tested manually, including renaming and the
+self-update; on Linux and macOS only with automated tests and headless screenshots.
 
 | Section | Code |
 |---|---|
