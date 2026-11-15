@@ -1,0 +1,16 @@
+/build/
+/bin/
+/out/
+/target/
+/log/
+
+### IntelliJ IDEA ###
+*.iws
+*.iml
+*.ipr
+!/.idea
+/.idea/*
+!/.idea/runConfigurations
+
+### local secrets ###
+.env
