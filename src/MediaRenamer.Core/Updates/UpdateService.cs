@@ -123,11 +123,13 @@ public sealed class UpdateService(HttpClient httpClient, string assetName, strin
     /// </summary>
     public static void CompleteUpdate(string newExecutable, string target, int? previousProcessId, TimeSpan timeout)
     {
-        var deadline = DateTime.UtcNow + timeout;
         if (previousProcessId is { } processId)
         {
             WaitForExit(processId, timeout);
         }
+
+        // the retries get the full timeout, even if waiting for the previous version took long
+        var deadline = DateTime.UtcNow + timeout;
 
         while (true)
         {
@@ -210,6 +212,11 @@ public sealed class UpdateService(HttpClient httpClient, string assetName, strin
             TryDelete(newExecutable);
             throw new UpdateException(e.Message, e);
         }
+        catch
+        {
+            TryDelete(newExecutable); // no partial executable stays behind, whatever the error
+            throw;
+        }
         finally
         {
             TryDelete(download);
@@ -253,7 +260,7 @@ public sealed class UpdateService(HttpClient httpClient, string assetName, strin
         if (assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
         {
             using var zip = ZipFile.OpenRead(archive);
-            var entry = zip.Entries.FirstOrDefault(e => e.FullName == executableName)
+            var entry = zip.Entries.FirstOrDefault(e => e.FullName.TrimStart('.', '/') == executableName)
                         ?? throw new InvalidDataException($"The download does not contain {executableName}.");
             entry.ExtractToFile(target, overwrite: true);
             return;

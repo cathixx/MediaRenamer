@@ -48,14 +48,43 @@ internal static class Program
         var languageArgument = Arguments.FirstOrDefault(a => a.StartsWith(LanguageOption, StringComparison.OrdinalIgnoreCase));
         if (languageArgument is not null)
         {
-            var culture = CultureInfo.GetCultureInfo(languageArgument[LanguageOption.Length..]);
-            CultureInfo.DefaultThreadCurrentUICulture = culture;
-            CultureInfo.CurrentUICulture = culture;
+            try
+            {
+                var culture = CultureInfo.GetCultureInfo(languageArgument[LanguageOption.Length..]);
+                CultureInfo.DefaultThreadCurrentUICulture = culture;
+                CultureInfo.CurrentUICulture = culture;
+            }
+            catch (CultureNotFoundException e)
+            {
+                Console.Error.WriteLine(e.Message); // unknown language: keep the language of the operating system
+            }
         }
 
         Theme = ParseTheme(Arguments);
-        FolderArguments = Arguments.Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToArray();
+        FolderArguments = Arguments.Where(a => !IsOption(a)).ToArray();
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime([.. Arguments]);
+    }
+
+    /// <summary>Whether a command line argument is an option rather than a folder path.</summary>
+    private static bool IsOption(string argument) => argument.StartsWith("--", StringComparison.Ordinal);
+
+    /// <summary>
+    /// The command line arguments with absolute folder paths, for starting another executable: it runs in its own
+    /// folder, so relative paths would refer to a different folder.
+    /// </summary>
+    public static IEnumerable<string> ArgumentsWithAbsolutePaths() =>
+        Arguments.Select(a => IsOption(a) || string.IsNullOrWhiteSpace(a) ? a : AbsolutePath(a));
+
+    private static string AbsolutePath(string path)
+    {
+        try
+        {
+            return Path.GetFullPath(path);
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return path;
+        }
     }
 
     /// <summary>

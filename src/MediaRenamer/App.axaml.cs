@@ -58,14 +58,16 @@ public partial class App : Application
                         await new DialogService(window).ShowErrorAsync(Strings.UpdateFailedHeader, startupError);
                     }
 
-                    var executable = Environment.ProcessPath;
+                    // after a failed update completion this process runs from the downloaded <name>.new file, which
+                    // must not be the target of another update
+                    var executable = Program.StartupError is null ? Environment.ProcessPath : null;
                     if (await viewModel.CheckForUpdateAsync(AppInfo.ReleaseVersion, executable) is { } newExecutable)
                     {
                         try
                         {
                             // the new version replaces this one as soon as this process has exited (UP-4)
-                            Start(newExecutable,
-                                UpdateArguments.Create(executable!, Environment.ProcessId, Program.Arguments));
+                            Start(newExecutable, UpdateArguments.Create(executable!, Environment.ProcessId,
+                                Program.ArgumentsWithAbsolutePaths()));
                             desktop.Shutdown();
                         }
                         catch (Exception e)
