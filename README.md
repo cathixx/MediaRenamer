@@ -6,6 +6,8 @@ using episode titles from [TheMovieDB](https://www.themoviedb.org/).
 This is a re-implementation of a JavaFX application in C# / .NET with [Avalonia UI](https://avaloniaui.net/).
 Current state: hello-world skeleton, the actual functionality is not implemented yet.
 
+The behavior is specified in [docs/requirements.md](docs/requirements.md).
+
 ## Development
 
 Requirement: [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0) in the version from `global.json` or a newer

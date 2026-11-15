@@ -11,14 +11,16 @@ Notes for AI agents working in this repository.
   `Strings.<culture>.resx` next to it (currently `de`). Translations are the only place where non-English text belongs.
   Never hard-code UI texts; add a key to all resx files and a property to `Resources/Strings.cs`, then use it in XAML
   via `{x:Static res:Strings.Key}` or in code via `Strings.Key`.
-- The legacy documentation in `../renamer/docs/funktionsumfang.md` is German. When porting behavior from it,
-  translate it, do not copy German wording into the repository.
+- The legacy documentation in `../renamer/docs/funktionsumfang.md` is German. It is superseded by
+  `docs/requirements.md`; do not copy German wording into the repository.
 
 ## Project
 
 - Cross-platform desktop application (Windows, Linux, macOS) that renames TV show video files based on TheMovieDB.
-  Re-implementation of the JavaFX application in `../renamer` (current behavior: `../renamer/docs/funktionsumfang.md`,
-  requirements for the re-implementation: section 11 there).
+  Re-implementation of the JavaFX application in `../renamer`.
+- **Requirements: `docs/requirements.md`.** It is the reference for behavior and tests; requirement IDs (e.g. `D-5`)
+  may be referenced in code and tests. Keep it up to date when behavior changes, including the open questions and
+  the implementation status at the end.
 - Stack: C# / .NET 10 (LTS, built with the .NET 11 SDK) with [Avalonia UI](https://avaloniaui.net/). The deliverable is a standalone executable
   (self-contained, single file), no JAR and no runtime installation required for the user.
 - The SDK version is pinned in `global.json`; CI uses the same version. Avalonia's source generators need a
