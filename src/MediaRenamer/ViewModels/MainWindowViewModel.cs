@@ -79,6 +79,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     public partial string? ShowPath { get; private set; }
 
+    /// <summary>
+    /// Folder in which the folder selection opens: the current show folder if it still exists, otherwise <c>null</c>
+    /// (the default of the operating system) (E-8).
+    /// </summary>
+    public string? FolderSelectionStart => ShowPath is { } path && Directory.Exists(path) ? path : null;
+
     [ObservableProperty]
     public partial string SearchTerm { get; set; } = string.Empty;
 

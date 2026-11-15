@@ -122,6 +122,21 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task FolderSelectionStart_IsTheOpenShowFolder()
+    {
+        var vm = CreateViewModel();
+        Assert.Null(vm.FolderSelectionStart); // nothing open yet
+
+        _temp.File("Eureka", "Staffel 01", "S01E01.mkv");
+        await vm.OpenAsync([Path.Combine(_show, "Staffel 01")]); // season folder mode, e.g. "Send to"
+        await vm.PendingShow;
+        Assert.Equal(_show, vm.FolderSelectionStart);
+
+        Directory.Delete(_show, recursive: true);
+        Assert.Null(vm.FolderSelectionStart); // no longer exists
+    }
+
+    [Fact]
     public async Task Open_NoPath_AsksForFolder()
     {
         var vm = CreateViewModel();

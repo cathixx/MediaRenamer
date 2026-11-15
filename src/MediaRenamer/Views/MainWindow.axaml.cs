@@ -23,10 +23,15 @@ public partial class MainWindow : Window
             return;
         }
 
+        // opens in the current show folder, otherwise e.g. after "Send to" somewhere else (E-8)
+        var start = viewModel.FolderSelectionStart is { } startPath
+            ? await StorageProvider.TryGetFolderFromPathAsync(startPath)
+            : null;
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
             Title = Strings.ChooseFolderTitle,
             AllowMultiple = false,
+            SuggestedStartLocation = start,
         });
         if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
         {
