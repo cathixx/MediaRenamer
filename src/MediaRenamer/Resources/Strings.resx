@@ -6,8 +6,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="SearchPlaceholder" xml:space="preserve"><value>Search for a show…</value></data>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
-  <data name="LanguageDe" xml:space="preserve"><value>German</value></data>
-  <data name="LanguageEn" xml:space="preserve"><value>English</value></data>
   <data name="Rename" xml:space="preserve"><value>Rename</value></data>
   <data name="ChooseFolder" xml:space="preserve"><value>Choose folder…</value></data>
   <data name="ChooseFolderTitle" xml:space="preserve"><value>Choose the show folder</value></data>

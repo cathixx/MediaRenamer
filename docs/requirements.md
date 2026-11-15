@@ -107,21 +107,23 @@ episodes of a show.
 |---|---|
 | T-1 | The show is searched at startup with the folder name and afterwards on every change of the search field, 1 second after the last input. |
 | T-2 | Spaces at the start and end of the search term are removed. The search starts as soon as at least one character remains, so shows like "24" or "ER" can be found. An empty search field clears the result list, the new names and the poster. |
-| T-3 | The search runs in parallel in **all** offered languages (German `de`, English `en`): `GET /3/search/tv` with `query`, `language`, `include_adult=false`. Only the first result page per language (up to 20 results) is evaluated. |
+| T-3 | The search runs in parallel in the **start language** (T-25) and in English (`en-US`), so a show is found by its local and by its international name: `GET /3/search/tv` with `query`, `language`, `include_adult=false`. Only the first result page per language (up to 20 results) is evaluated. |
 | T-4 | Results whose name contains neither a letter A–Z nor a digit are discarded (e.g. purely non-Latin titles). |
 | T-5 | Results of all languages are merged by TMDB ID. A show thereby has one name per language in which it was found. |
 | T-6 | A year in parentheses at the end of a show name is removed: `Doctor Who (2005)` → `Doctor Who`. |
 | T-7 | Taken per show: ID, names, year of first air date (from `first_air_date`), poster path, popularity. Year and poster come from the result of any of the languages. |
 | T-8 | **Sorting of results:** 1. shows whose name in any language equals the search term exactly (case-insensitive) first. 2. popularity descending. 3. number of languages with a name descending. 4. year descending, shows without year first. 5. ID ascending. |
 | T-9 | After every search the first result is selected automatically and its episodes are loaded. |
-| T-10 | A result is displayed as its name in the selected language, otherwise a name from another language, followed by ` (year)` if known. |
+| T-10 | A result is displayed as its name in the selected language, otherwise its name in the first search language in which it was found, followed by ` (year)` if known. |
 
 ### 4.2 Loading episodes
 
-Triggered by selecting a result or changing the language.
+Triggered by selecting a result (languages and episodes) or changing the language (episodes only).
 
 | ID | Requirement |
 |---|---|
+| T-24 | **Languages of the show:** `GET /3/tv/{id}/translations` returns the languages in which TMDB has a translation of the show, as language and region (e.g. `de-DE`, `pt-BR`). Only these are offered in the language selection, named in the language of the UI (e.g. "Portuguese (Brazil)") and sorted by name. |
+| T-25 | **Selected language:** the start language is the language the application was started with (UI language of the operating system or `--lang`). For every show, the language that fits the preferred language best is selected: the same language and region, the same language in its main region (e.g. `de-DE` for `de`), the same language in any region, then English likewise, then the first language of the show. The preferred language is the start language until the user selects a language; afterwards it is the selected one, also for other shows. |
 | T-11 | `GET /3/tv/{id}` in the selected language returns the number of seasons. |
 | T-12 | Seasons 1 to that number are loaded in parallel with `GET /3/tv/{id}/season/{n}` in the selected language. Season 0 (specials) is never loaded. |
 | T-13 | **Matching:** a local file belongs to the TMDB episode with the same season and episode number (of a double episode: its first episode). There is no other matching (no title comparison, no absolute numbering, no alternative order). |
@@ -138,7 +140,7 @@ Triggered by selecting a result or changing the language.
 
 | ID | Requirement |
 |---|---|
-| T-17 | Results are kept in memory while the application runs: search results per search term, episodes per show and language, posters per URL. Repeated requests return immediately without network access. There is no persistent cache. |
+| T-17 | Results are kept in memory while the application runs: search results per search term, episodes per show and language, languages per show, posters per URL. Repeated requests return immediately without network access. There is no persistent cache. |
 | T-18 | All network access and the renaming run in the background; the UI stays responsive. |
 | T-19 | If several requests of the same kind run, only the result of the most recently started one is shown. Older results only go into the cache. |
 | T-20 | **Network errors are visible:** if a TMDB request fails, this is shown in the UI. A failed request is not cached, so a retry can succeed. |
@@ -173,7 +175,7 @@ follows the operating system and can be set with `--lang=<culture>`.
 |---|---|---|
 | left | text field | search term for the show, initially the folder name |
 | left | list | search results (T-10), single selection |
-| left | selection box | language of the episode titles and show names: German (default), English |
+| left | selection box | language of the episode titles: the languages of the selected show (T-24), default see T-25; empty without a selected show |
 | left | button "Rename" | starts renaming |
 | center | table | one row per video file |
 | right | image | poster of the selected show, at most 400 × 750, aspect ratio kept |

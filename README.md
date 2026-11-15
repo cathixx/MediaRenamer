@@ -101,6 +101,10 @@ the German translation. The language is chosen at startup:
 
 To add a language, copy `Strings.resx` to `Strings.<culture>.resx` (e.g. `Strings.fr.resx`) and translate the values.
 
+The episode titles are independent of the UI translations: the language selection offers all languages in which
+TheMovieDB has a translation of the selected show. The default is the language the application was started with
+(e.g. `--lang=fr-FR`), otherwise English.
+
 ## Building an executable
 
 A single, standalone executable (no .NET runtime installation needed for the user):

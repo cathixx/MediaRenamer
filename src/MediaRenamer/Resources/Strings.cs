@@ -47,9 +47,4 @@ public static class Strings
     public static string TargetExists => Get(nameof(TargetExists));
     public static string MissingApiKeyHeader => Get(nameof(MissingApiKeyHeader));
     public static string MissingApiKeyText => Get(nameof(MissingApiKeyText));
-
-    /// <summary>Display name of a TMDB language code, e.g. <c>de</c> → German.</summary>
-    public static string LanguageName(string code) =>
-        Manager.GetString("Language" + CultureInfo.InvariantCulture.TextInfo.ToTitleCase(code), CultureInfo.CurrentUICulture)
-        ?? code;
 }

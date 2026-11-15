@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -29,10 +30,13 @@ public partial class App : Application
             }
             else
             {
+                // T-25: episode titles in the language the application was started with, if available
+                var language = TmdbLanguages.FromCulture(CultureInfo.CurrentUICulture);
                 var window = new MainWindow();
                 var viewModel = new MainWindowViewModel(
-                    new TmdbService(new TmdbClient(new HttpClient(), apiKey)),
-                    new DialogService(window));
+                    new TmdbService(new TmdbClient(new HttpClient(), apiKey), TmdbLanguages.SearchLanguages(language)),
+                    new DialogService(window),
+                    language);
                 window.DataContext = viewModel;
                 HandleUnexpectedErrors(viewModel);
                 window.Opened += async (_, _) => await viewModel.OpenAsync(Program.FolderArguments);

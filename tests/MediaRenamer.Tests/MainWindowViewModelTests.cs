@@ -18,13 +18,13 @@ public sealed class MainWindowViewModelTests : IDisposable
         _show = _temp.Folder("Eureka");
         _client.Searches["Eureka"] = [new SearchTvResult(EurekaId, "Eureka", "2006-07-18", "/eureka.jpg", 50)];
         _client.Searches["Other"] = [new SearchTvResult(2, "Other Show", null, null, 1)];
-        _client.Episodes[(EurekaId, "de")] =
+        _client.Episodes[(EurekaId, "de-DE")] =
         [
             new TvEpisode(1, 1, "Pilot DE"),
             new TvEpisode(1, 2, "Glückliche Wiederkehr"),
             new TvEpisode(2, 1, "Phönix"),
         ];
-        _client.Episodes[(EurekaId, "en")] =
+        _client.Episodes[(EurekaId, "en-US")] =
         [
             new TvEpisode(1, 1, "Pilot"),
             new TvEpisode(1, 2, "Many Happy Returns"),
@@ -35,7 +35,7 @@ public sealed class MainWindowViewModelTests : IDisposable
     public void Dispose() => _temp.Dispose();
 
     private MainWindowViewModel CreateViewModel() =>
-        new(new TmdbService(_client), _dialogs) { SearchDelay = TimeSpan.Zero };
+        new(new TmdbService(_client, ["de-DE", "en-US"]), _dialogs, "de-DE") { SearchDelay = TimeSpan.Zero };
 
     private async Task<MainWindowViewModel> OpenAsync(params string[] files)
     {
@@ -151,7 +151,7 @@ public sealed class MainWindowViewModelTests : IDisposable
     [Fact]
     public async Task ChangingTheSearchTerm_OnlyTheLastInputIsSearched()
     {
-        var vm = new MainWindowViewModel(new TmdbService(_client), _dialogs) { SearchDelay = TimeSpan.FromHours(1) };
+        var vm = new MainWindowViewModel(new TmdbService(_client, ["de-DE", "en-US"]), _dialogs, "de-DE") { SearchDelay = TimeSpan.FromHours(1) };
 
         vm.SearchTerm = "Eur";
         var first = vm.PendingSearch;
@@ -203,10 +203,101 @@ public sealed class MainWindowViewModelTests : IDisposable
     {
         var vm = await OpenAsync("Staffel 01/S01E01.mkv");
 
-        vm.SelectedLanguage = vm.Languages.Single(l => l.Code == "en");
+        vm.SelectedLanguage = vm.Languages.Single(l => l.Code == "en-US");
         await vm.PendingShow;
 
         Assert.Equal("S01E01 - Pilot", vm.Episodes[0].NewName);
+    }
+
+    [Fact]
+    public async Task Languages_OfTheSelectedShow_StartLanguageSelected()
+    {
+        _client.Translations[EurekaId] =
+        [
+            new TvTranslation("en", "US", "English"),
+            new TvTranslation("de", "DE", "German"),
+            new TvTranslation("fr", "FR", "French"),
+        ];
+
+        var vm = await OpenAsync("Staffel 01/S01E01.mkv");
+
+        Assert.Equal(["de-DE", "en-US", "fr-FR"], vm.Languages.Select(l => l.Code).Order());
+        Assert.Equal("de-DE", vm.SelectedLanguage?.Code);
+        Assert.Equal("S01E01 - Pilot DE", vm.Episodes[0].NewName);
+    }
+
+    [Fact]
+    public async Task Languages_StartLanguageNotAvailable_SameLanguageOrEnglish()
+    {
+        _client.Searches["Other"] = [new SearchTvResult(2, "Other Show", null, null, 1)];
+        _client.Episodes[(2, "de-AT")] = [new TvEpisode(1, 1, "Pilot AT")];
+        _client.Episodes[(2, "en-US")] = [new TvEpisode(1, 1, "Pilot")];
+        _client.Episodes[(3, "en-US")] = [new TvEpisode(1, 1, "Third")];
+        _client.Episodes[(3, "ja-JP")] = [new TvEpisode(1, 1, "Japanese")];
+        _client.Searches["Third"] = [new SearchTvResult(3, "Third Show", null, null, 1)];
+        var vm = await OpenAsync("Staffel 01/S01E01.mkv");
+
+        vm.SearchTerm = "Other";
+        await vm.PendingSearch;
+        await vm.PendingShow;
+        Assert.Equal("de-AT", vm.SelectedLanguage?.Code); // same language, other region
+
+        vm.SearchTerm = "Third";
+        await vm.PendingSearch;
+        await vm.PendingShow;
+        Assert.Equal("en-US", vm.SelectedLanguage?.Code); // English
+        Assert.Equal("S01E01 - Third", vm.Episodes[0].NewName);
+    }
+
+    [Fact]
+    public async Task Languages_SelectedLanguageIsKeptForOtherShows()
+    {
+        _client.Episodes[(EurekaId, "fr-FR")] = [new TvEpisode(1, 1, "Rencontre")];
+        _client.Episodes[(2, "fr-FR")] = [new TvEpisode(1, 1, "Autre")];
+        _client.Episodes[(2, "de-DE")] = [new TvEpisode(1, 1, "Andere")];
+        var vm = await OpenAsync("Staffel 01/S01E01.mkv");
+
+        vm.SelectedLanguage = vm.Languages.Single(l => l.Code == "fr-FR");
+        await vm.PendingShow;
+        Assert.Equal("S01E01 - Rencontre", vm.Episodes[0].NewName);
+
+        vm.SearchTerm = "Other";
+        await vm.PendingSearch;
+        await vm.PendingShow;
+
+        Assert.Equal("fr-FR", vm.SelectedLanguage?.Code);
+        Assert.Equal("S01E01 - Autre", vm.Episodes[0].NewName);
+    }
+
+    [Fact]
+    public async Task Languages_ClearedWithoutShow()
+    {
+        var vm = await OpenAsync("Staffel 01/S01E01.mkv");
+
+        vm.SearchTerm = "";
+        await vm.PendingSearch;
+        await vm.PendingShow;
+
+        Assert.Empty(vm.Languages);
+        Assert.Null(vm.SelectedLanguage);
+    }
+
+    [Theory]
+    [InlineData("de-DE", "German", "German (Germany)")]
+    [InlineData("pt-BR", "Portuguese", "Portuguese (Brazil)")]
+    [InlineData("xx-YY", "Unknown", "Unknown (YY)")]
+    public void LanguageDisplayName(string code, string englishName, string expected)
+    {
+        var previous = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+        try
+        {
+            Assert.Equal(expected, MainWindowViewModel.LanguageDisplayName(new TmdbLanguage(code, englishName)));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = previous;
+        }
     }
 
     [Fact]
@@ -233,7 +324,7 @@ public sealed class MainWindowViewModelTests : IDisposable
         var vm = await OpenAsync("Staffel 01/S01E01.mkv");
         _client.Fail = true;
 
-        vm.SelectedLanguage = vm.Languages.Single(l => l.Code == "en");
+        vm.SelectedLanguage = vm.Languages.Single(l => l.Code == "en-US");
         await vm.PendingShow;
 
         Assert.NotNull(vm.TmdbError);
@@ -296,7 +387,7 @@ public sealed class MainWindowViewModelTests : IDisposable
         Assert.False(vm.RenameCommand.CanExecute(null)); // the deselected file is the only candidate left
 
         // renamed files can be renamed again, e.g. in another language
-        vm.SelectedLanguage = vm.Languages.Single(l => l.Code == "en");
+        vm.SelectedLanguage = vm.Languages.Single(l => l.Code == "en-US");
         await vm.PendingShow;
         await vm.RenameCommand.ExecuteAsync(null);
         Assert.Equal(["S01E01 - Pilot.mkv", "S01E03.avi", "x.MKV"], _temp.Entries("Eureka", "Staffel 01"));

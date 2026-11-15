@@ -8,7 +8,7 @@ namespace MediaRenamer.Core.Tmdb;
 public sealed class TmdbException(string message, Exception? innerException = null)
     : Exception(message, innerException);
 
-/// <summary>Access to the TMDB API v3 (T-3, T-11, T-12, T-16, T-22).</summary>
+/// <summary>Access to the TMDB API v3 (T-3, T-11, T-12, T-16, T-22, T-24).</summary>
 public interface ITmdbClient
 {
     /// <summary>Searches shows; only the first result page (up to 20 results) is returned.</summary>
@@ -19,6 +19,9 @@ public interface ITmdbClient
 
     /// <summary>Returns the episodes of a season.</summary>
     Task<IReadOnlyList<TvEpisode>> GetSeasonEpisodesAsync(int showId, int season, string language, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns the languages in which TMDB has a translation of a show.</summary>
+    Task<IReadOnlyList<TvTranslation>> GetTranslationsAsync(int showId, CancellationToken cancellationToken = default);
 
     /// <summary>Returns the poster image (JPEG) for a poster path like <c>/abc.jpg</c>.</summary>
     Task<byte[]> GetPosterAsync(string posterPath, CancellationToken cancellationToken = default);
@@ -55,6 +58,14 @@ public sealed class TmdbClient(HttpClient httpClient, string apiKey) : ITmdbClie
         var response = await GetJsonAsync(Invariant($"tv/{showId}/season/{season}"), [("language", language)],
             TmdbJsonContext.Default.TvSeasonResponse, cancellationToken).ConfigureAwait(false);
         return response.Episodes ?? [];
+    }
+
+    public async Task<IReadOnlyList<TvTranslation>> GetTranslationsAsync(int showId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await GetJsonAsync(Invariant($"tv/{showId}/translations"), [],
+            TmdbJsonContext.Default.TvTranslationsResponse, cancellationToken).ConfigureAwait(false);
+        return response.Translations ?? [];
     }
 
     public async Task<byte[]> GetPosterAsync(string posterPath, CancellationToken cancellationToken = default)

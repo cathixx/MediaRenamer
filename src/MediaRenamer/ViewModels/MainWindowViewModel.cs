@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -34,13 +35,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private int _searchVersion;
     private int _showVersion;
     private Func<Task>? _retry;
+    private bool _settingLanguages;
 
-    public MainWindowViewModel(TmdbService tmdb, IDialogService dialogs)
+    /// <summary>The language the user wants: initially the start language, then the last selected one (T-25).</summary>
+    private string _preferredLanguage;
+
+    /// <param name="tmdb">TMDB access.</param>
+    /// <param name="dialogs">Dialogs of the view.</param>
+    /// <param name="preferredLanguage">TMDB language code of the language the application was started with, e.g.
+    /// <c>de-DE</c>; the default language of the episode titles.</param>
+    public MainWindowViewModel(TmdbService tmdb, IDialogService dialogs, string preferredLanguage)
     {
         _tmdb = tmdb;
         _dialogs = dialogs;
-        Languages = TmdbLanguages.All.Select(code => new LanguageOption(code, Strings.LanguageName(code))).ToList();
-        SelectedLanguage = Languages[0];
+        _preferredLanguage = preferredLanguage;
     }
 
     /// <summary>Delay between the last change of the search term and the search (T-1).</summary>
@@ -50,7 +58,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<ShowItemViewModel> SearchResults { get; } = [];
 
-    public IReadOnlyList<LanguageOption> Languages { get; }
+    /// <summary>Languages of the selected show, sorted by their display name (T-24).</summary>
+    public ObservableCollection<LanguageOption> Languages { get; } = [];
 
     /// <summary>The running delayed search, for tests.</summary>
     internal Task PendingSearch { get; private set; } = Task.CompletedTask;
@@ -69,7 +78,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public partial ShowItemViewModel? SelectedShow { get; set; }
 
     [ObservableProperty]
-    public partial LanguageOption SelectedLanguage { get; set; }
+    public partial LanguageOption? SelectedLanguage { get; set; }
 
     /// <summary>Poster image of the selected show (T-16).</summary>
     [ObservableProperty]
@@ -220,7 +229,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             SearchResults.Clear();
             foreach (var show in shows)
             {
-                SearchResults.Add(new ShowItemViewModel(show, SelectedLanguage.Code));
+                SearchResults.Add(new ShowItemViewModel(show, SelectedLanguage?.Code ?? _preferredLanguage));
             }
 
             SelectedShow = SearchResults.FirstOrDefault();
@@ -247,24 +256,33 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    partial void OnSelectedShowChanged(ShowItemViewModel? value) => PendingShow = LoadShowAsync();
+    partial void OnSelectedShowChanged(ShowItemViewModel? value) => PendingShow = LoadShowAsync(loadLanguages: true);
 
-    partial void OnSelectedLanguageChanged(LanguageOption value)
+    partial void OnSelectedLanguageChanged(LanguageOption? value)
     {
+        if (_settingLanguages || value is null)
+        {
+            return;
+        }
+
+        // the user selected the language: keep it for other shows as well (T-25)
+        _preferredLanguage = value.Code;
         foreach (var result in SearchResults)
         {
             result.SetLanguage(value.Code);
         }
 
-        PendingShow = LoadShowAsync();
+        PendingShow = LoadShowAsync(loadLanguages: false);
     }
 
-    /// <summary>Loads the episode titles and the poster of the selected show (T-11 to T-16).</summary>
-    private async Task LoadShowAsync()
+    /// <summary>
+    /// Loads the languages (if <paramref name="loadLanguages"/>), the episode titles and the poster of the selected
+    /// show (T-11 to T-16, T-24, T-25).
+    /// </summary>
+    private async Task LoadShowAsync(bool loadLanguages)
     {
         var version = ++_showVersion;
         var show = SelectedShow?.Show;
-        var language = SelectedLanguage.Code;
         if (show is null)
         {
             foreach (var row in Episodes)
@@ -272,6 +290,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 row.Clear();
             }
 
+            SetLanguages([]);
             Poster = null;
             IsLoadingShow = false;
             UpdateConflicts();
@@ -290,6 +309,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
             var posterTask = _tmdb.GetPosterAsync(show.PosterPath);
             try
             {
+                if (loadLanguages)
+                {
+                    var languages = await _tmdb.GetLanguagesAsync(show.Id);
+                    if (version != _showVersion)
+                    {
+                        return; // T-19
+                    }
+
+                    SetLanguages(languages);
+                }
+
+                var language = SelectedLanguage?.Code ?? _preferredLanguage;
                 var titles = await _tmdb.GetEpisodeTitlesAsync(show.Id, language);
                 if (version != _showVersion)
                 {
@@ -310,7 +341,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                         row.Clear();
                     }
 
-                    SetTmdbError(Strings.EpisodesFailed(e.Message), LoadShowAsync);
+                    SetTmdbError(Strings.EpisodesFailed(e.Message), () => LoadShowAsync(loadLanguages));
                 }
             }
 
@@ -327,7 +358,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 if (version == _showVersion)
                 {
                     Poster = null;
-                    SetTmdbError(Strings.PosterFailed(e.Message), LoadShowAsync);
+                    SetTmdbError(Strings.PosterFailed(e.Message), () => LoadShowAsync(loadLanguages));
                 }
             }
         }
@@ -342,6 +373,44 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 IsLoadingShow = false;
                 UpdateConflicts();
             }
+        }
+    }
+
+    /// <summary>
+    /// Offers the languages of the show and selects the one that fits the preferred language best (T-25), without
+    /// changing the preferred language.
+    /// </summary>
+    private void SetLanguages(IReadOnlyList<TmdbLanguage> languages)
+    {
+        _settingLanguages = true;
+        try
+        {
+            var best = TmdbLanguages.BestMatch(languages, _preferredLanguage);
+            Languages.Clear();
+            foreach (var option in languages.Select(l => new LanguageOption(l.Code, LanguageDisplayName(l)))
+                         .OrderBy(o => o.DisplayName, StringComparer.CurrentCulture))
+            {
+                Languages.Add(option);
+            }
+
+            SelectedLanguage = best is null ? null : Languages.First(o => o.Code == best.Code);
+        }
+        finally
+        {
+            _settingLanguages = false;
+        }
+    }
+
+    /// <summary>Name of a language in the language of the UI, e.g. "German (Germany)".</summary>
+    internal static string LanguageDisplayName(TmdbLanguage language)
+    {
+        try
+        {
+            return CultureInfo.GetCultureInfo(language.Code, predefinedOnly: true).DisplayName;
+        }
+        catch (CultureNotFoundException)
+        {
+            return language.Region is { } region ? $"{language.EnglishName} ({region})" : language.EnglishName;
         }
     }
 

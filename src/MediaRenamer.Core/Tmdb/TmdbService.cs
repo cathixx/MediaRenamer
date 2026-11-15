@@ -7,9 +7,12 @@ namespace MediaRenamer.Core.Tmdb;
 /// Show search and episode titles from TMDB, with an in-memory cache (section 4 of the requirements).
 /// All operations may throw <see cref="TmdbException"/>; failed requests are not cached.
 /// </summary>
-public sealed partial class TmdbService(ITmdbClient client)
+/// <param name="client">TMDB access.</param>
+/// <param name="searchLanguages">Languages of the show search, see <see cref="TmdbLanguages.SearchLanguages"/>.</param>
+public sealed partial class TmdbService(ITmdbClient client, IReadOnlyList<string> searchLanguages)
 {
     private readonly AsyncCache<string, IReadOnlyList<Show>> _searches = new();
+    private readonly AsyncCache<int, IReadOnlyList<TmdbLanguage>> _languages = new();
     private readonly AsyncCache<(int ShowId, string Language), EpisodeTitles> _episodes = new();
     private readonly AsyncCache<string, byte[]> _posters = new();
 
@@ -20,7 +23,7 @@ public sealed partial class TmdbService(ITmdbClient client)
     private static partial Regex YearAtEnd();
 
     /// <summary>
-    /// Searches shows in all languages and returns them merged and sorted (T-2 to T-8). An empty search term returns
+    /// Searches shows in all search languages and returns them merged and sorted (T-2 to T-8). An empty search term returns
     /// no results.
     /// </summary>
     public Task<IReadOnlyList<Show>> SearchAsync(string searchTerm)
@@ -30,6 +33,13 @@ public sealed partial class TmdbService(ITmdbClient client)
             ? Task.FromResult<IReadOnlyList<Show>>([])
             : _searches.GetAsync(query, SearchUncachedAsync);
     }
+
+    /// <summary>
+    /// Returns the languages in which TMDB has a translation of the show (T-24), in the order of TMDB, without
+    /// duplicates.
+    /// </summary>
+    public Task<IReadOnlyList<TmdbLanguage>> GetLanguagesAsync(int showId) =>
+        _languages.GetAsync(showId, LoadLanguagesAsync);
 
     /// <summary>Loads the episode titles of all seasons of a show except the specials (T-11, T-12).</summary>
     public Task<EpisodeTitles> GetEpisodeTitlesAsync(int showId, string language) =>
@@ -41,7 +51,7 @@ public sealed partial class TmdbService(ITmdbClient client)
 
     private async Task<IReadOnlyList<Show>> SearchUncachedAsync(string query)
     {
-        var languages = TmdbLanguages.All;
+        var languages = searchLanguages;
         var results = await Task.WhenAll(languages.Select(l => client.SearchShowsAsync(query, l))).ConfigureAwait(false);
 
         var shows = new Dictionary<int, ShowBuilder>();
@@ -73,6 +83,18 @@ public sealed partial class TmdbService(ITmdbClient client)
             .ThenByDescending(s => s.Names.Count)
             .ThenByDescending(s => s.Year ?? int.MaxValue) // shows without year first
             .ThenBy(s => s.Id)
+            .ToList();
+    }
+
+    private async Task<IReadOnlyList<TmdbLanguage>> LoadLanguagesAsync(int showId)
+    {
+        var translations = await client.GetTranslationsAsync(showId).ConfigureAwait(false);
+        return translations
+            .Where(t => !string.IsNullOrWhiteSpace(t.Language))
+            .Select(t => new TmdbLanguage(
+                string.IsNullOrWhiteSpace(t.Region) ? t.Language! : $"{t.Language}-{t.Region}",
+                string.IsNullOrWhiteSpace(t.EnglishName) ? t.Language! : t.EnglishName))
+            .DistinctBy(l => l.Code, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 

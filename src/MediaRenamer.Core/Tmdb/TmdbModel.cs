@@ -32,8 +32,19 @@ public sealed record TvEpisode(
     [property: JsonPropertyName("episode_number")] int EpisodeNumber,
     [property: JsonPropertyName("name")] string? Name);
 
+/// <summary>Response of <c>GET /3/tv/{id}/translations</c>.</summary>
+public sealed record TvTranslationsResponse(
+    [property: JsonPropertyName("translations")] IReadOnlyList<TvTranslation>? Translations);
+
+/// <summary>A language in which TMDB has a translation of a show.</summary>
+public sealed record TvTranslation(
+    [property: JsonPropertyName("iso_639_1")] string? Language,
+    [property: JsonPropertyName("iso_3166_1")] string? Region,
+    [property: JsonPropertyName("english_name")] string? EnglishName);
+
 /// <summary>Source generated JSON metadata, so (de)serialization works in the trimmed executable.</summary>
 [JsonSerializable(typeof(SearchTvResponse))]
 [JsonSerializable(typeof(TvDetailsResponse))]
 [JsonSerializable(typeof(TvSeasonResponse))]
+[JsonSerializable(typeof(TvTranslationsResponse))]
 internal sealed partial class TmdbJsonContext : JsonSerializerContext;

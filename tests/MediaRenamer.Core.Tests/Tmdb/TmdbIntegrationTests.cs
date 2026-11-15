@@ -18,7 +18,7 @@ public class TmdbIntegrationTests
             Assert.Skip($"environment variable {TmdbApiKey.EnvironmentVariable} is not set");
         }
 
-        return new TmdbService(new TmdbClient(new HttpClient(), apiKey));
+        return new TmdbService(new TmdbClient(new HttpClient(), apiKey), ["de-DE", "en-US"]);
     }
 
     [Fact(Explicit = true)]
@@ -28,7 +28,7 @@ public class TmdbIntegrationTests
 
         var eureka = shows[0];
         Assert.Equal(EurekaId, eureka.Id);
-        Assert.Equal(["de", "en"], eureka.Names.Keys.Order());
+        Assert.Equal(["de-DE", "en-US"], eureka.Names.Keys.Order());
         Assert.Equal(2006, eureka.Year);
         Assert.NotNull(eureka.PosterPath);
     }
@@ -38,8 +38,8 @@ public class TmdbIntegrationTests
     {
         var service = CreateService();
 
-        var german = await service.GetEpisodeTitlesAsync(EurekaId, "de");
-        var english = await service.GetEpisodeTitlesAsync(EurekaId, "en");
+        var german = await service.GetEpisodeTitlesAsync(EurekaId, "de-DE");
+        var english = await service.GetEpisodeTitlesAsync(EurekaId, "en-US");
 
         Assert.True(german.Count > 50);
         Assert.True(german.TryGetTitle(1, 1, out var germanTitle));
@@ -54,9 +54,19 @@ public class TmdbIntegrationTests
     }
 
     [Fact(Explicit = true)]
+    public async Task LanguagesOfTheShow()
+    {
+        var languages = await CreateService().GetLanguagesAsync(EurekaId);
+
+        Assert.Contains(new TmdbLanguage("de-DE", "German"), languages);
+        Assert.Contains(new TmdbLanguage("en-US", "English"), languages);
+        Assert.True(languages.Count > 10);
+    }
+
+    [Fact(Explicit = true)]
     public async Task InvalidApiKeyFails()
     {
-        var service = new TmdbService(new TmdbClient(new HttpClient(), "invalid"));
+        var service = new TmdbService(new TmdbClient(new HttpClient(), "invalid"), ["en-US"]);
 
         var e = await Assert.ThrowsAsync<TmdbException>(() => service.SearchAsync("Eureka"));
         Assert.Contains("401", e.Message, StringComparison.Ordinal);

@@ -8,6 +8,9 @@ internal sealed class FakeTmdbClient : ITmdbClient
 {
     public Dictionary<string, List<SearchTvResult>> Searches { get; } = new();
     public Dictionary<(int ShowId, string Language), List<TvEpisode>> Episodes { get; } = new();
+
+    /// <summary>Languages of the shows; by default the languages of <see cref="Episodes"/>.</summary>
+    public Dictionary<int, List<TvTranslation>> Translations { get; } = new();
     public bool Fail { get; set; }
 
     /// <summary>Data returned for every poster.</summary>
@@ -32,7 +35,7 @@ internal sealed class FakeTmdbClient : ITmdbClient
 
         ThrowIfFailing();
         // the shows are found in English only
-        return language == "en" ? Searches.GetValueOrDefault(query) ?? [] : [];
+        return language == "en-US" ? Searches.GetValueOrDefault(query) ?? [] : [];
     }
 
     public Task<int> GetNumberOfSeasonsAsync(int showId, string language, CancellationToken cancellationToken = default)
@@ -48,6 +51,17 @@ internal sealed class FakeTmdbClient : ITmdbClient
         ThrowIfFailing();
         return Task.FromResult<IReadOnlyList<TvEpisode>>(
             (Episodes.GetValueOrDefault((showId, language)) ?? []).Where(e => e.SeasonNumber == season).ToList());
+    }
+
+    public Task<IReadOnlyList<TvTranslation>> GetTranslationsAsync(int showId,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfFailing();
+        var translations = Translations.GetValueOrDefault(showId)
+                           ?? Episodes.Keys.Where(k => k.ShowId == showId)
+                               .Select(k => new TvTranslation(k.Language[..2], k.Language[3..], k.Language))
+                               .ToList();
+        return Task.FromResult<IReadOnlyList<TvTranslation>>(translations);
     }
 
     public Task<byte[]> GetPosterAsync(string posterPath, CancellationToken cancellationToken = default)

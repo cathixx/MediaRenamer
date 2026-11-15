@@ -10,6 +10,8 @@ public class TmdbServiceTests
         public Dictionary<(string Query, string Language), List<SearchTvResult>> Searches { get; } = new();
         public Dictionary<int, int> Seasons { get; } = new();
         public Dictionary<(int ShowId, int Season, string Language), List<TvEpisode>> Episodes { get; } = new();
+        public Dictionary<int, List<TvTranslation>> Translations { get; } = new();
+        public int TranslationRequests { get; private set; }
         public bool Fail { get; set; }
         public int SearchRequests { get; private set; }
         public int SeasonRequests { get; private set; }
@@ -40,6 +42,14 @@ public class TmdbServiceTests
                 Episodes.GetValueOrDefault((showId, season, language)) ?? []);
         }
 
+        public Task<IReadOnlyList<TvTranslation>> GetTranslationsAsync(int showId,
+            CancellationToken cancellationToken = default)
+        {
+            TranslationRequests++;
+            ThrowIfFailing();
+            return Task.FromResult<IReadOnlyList<TvTranslation>>(Translations.GetValueOrDefault(showId) ?? []);
+        }
+
         public Task<byte[]> GetPosterAsync(string posterPath, CancellationToken cancellationToken = default)
         {
             PosterRequests++;
@@ -66,7 +76,7 @@ public class TmdbServiceTests
         client.Searches[("Doctor Who", "de")] = [Result(57243, "Doctor Who (2005)", "2005-03-26", 50, "/de.jpg")];
         client.Searches[("Doctor Who", "en")] = [Result(57243, "Doctor Who", "2005-03-26", 50, "/en.jpg")];
 
-        var show = Assert.Single(await new TmdbService(client).SearchAsync("  Doctor Who "));
+        var show = Assert.Single(await new TmdbService(client, ["de", "en"]).SearchAsync("  Doctor Who "));
 
         Assert.Equal(57243, show.Id);
         Assert.Equal(new Dictionary<string, string> { ["de"] = "Doctor Who", ["en"] = "Doctor Who" }, show.Names);
@@ -80,7 +90,7 @@ public class TmdbServiceTests
         var client = new FakeClient();
         client.Searches[("x", "de")] = [Result(1, "日本語"), Result(2, "Ärger 日本"), Result(3, "24")];
 
-        var shows = await new TmdbService(client).SearchAsync("x");
+        var shows = await new TmdbService(client, ["de", "en"]).SearchAsync("x");
 
         Assert.Equal([2, 3], shows.Select(s => s.Id).Order());
     }
@@ -105,7 +115,7 @@ public class TmdbServiceTests
             Result(6, "Eureka Both", "2000-01-01", popularity: 5),
         ];
 
-        var shows = await new TmdbService(client).SearchAsync("eureka");
+        var shows = await new TmdbService(client, ["de", "en"]).SearchAsync("eureka");
 
         // 1. exact match, 2. popularity, 3. number of languages, 4. year descending (unknown first), 5. ID
         Assert.Equal([5, 1, 6, 4, 2, 8, 3], shows.Select(s => s.Id));
@@ -116,7 +126,7 @@ public class TmdbServiceTests
     {
         var client = new FakeClient();
 
-        Assert.Empty(await new TmdbService(client).SearchAsync("   "));
+        Assert.Empty(await new TmdbService(client, ["de", "en"]).SearchAsync("   "));
         Assert.Equal(0, client.SearchRequests);
     }
 
@@ -126,14 +136,14 @@ public class TmdbServiceTests
         var client = new FakeClient();
         client.Searches[("V", "en")] = [Result(1, "V")];
 
-        Assert.Single(await new TmdbService(client).SearchAsync("V"));
+        Assert.Single(await new TmdbService(client, ["de", "en"]).SearchAsync("V"));
     }
 
     [Fact]
     public async Task Search_IsCached()
     {
         var client = new FakeClient();
-        var service = new TmdbService(client);
+        var service = new TmdbService(client, ["de", "en"]);
 
         await service.SearchAsync("Eureka");
         await service.SearchAsync(" Eureka ");
@@ -146,7 +156,7 @@ public class TmdbServiceTests
     {
         var client = new FakeClient { Fail = true };
         client.Searches[("Eureka", "de")] = [Result(1, "Eureka")];
-        var service = new TmdbService(client);
+        var service = new TmdbService(client, ["de", "en"]);
 
         await Assert.ThrowsAsync<TmdbException>(() => service.SearchAsync("Eureka"));
         client.Fail = false;
@@ -163,7 +173,7 @@ public class TmdbServiceTests
         client.Episodes[(7, 1, "de")] = [new TvEpisode(1, 1, "Pilot"), new TvEpisode(1, 2, "")];
         client.Episodes[(7, 2, "de")] = [new TvEpisode(2, 1, "Zwei")];
 
-        var titles = await new TmdbService(client).GetEpisodeTitlesAsync(7, "de");
+        var titles = await new TmdbService(client, ["de", "en"]).GetEpisodeTitlesAsync(7, "de");
 
         Assert.Equal(3, titles.Count);
         Assert.True(titles.TryGetTitle(1, 1, out var pilot));
@@ -182,7 +192,7 @@ public class TmdbServiceTests
         var client = new FakeClient { Fail = true };
         client.Seasons[7] = 1;
         client.Episodes[(7, 1, "en")] = [new TvEpisode(1, 1, "Pilot")];
-        var service = new TmdbService(client);
+        var service = new TmdbService(client, ["de", "en"]);
 
         await Assert.ThrowsAsync<TmdbException>(() => service.GetEpisodeTitlesAsync(7, "en"));
         client.Fail = false;
@@ -198,12 +208,65 @@ public class TmdbServiceTests
     public async Task Poster_CachedAndNullWithoutPath()
     {
         var client = new FakeClient();
-        var service = new TmdbService(client);
+        var service = new TmdbService(client, ["de", "en"]);
 
         Assert.Null(await service.GetPosterAsync(null));
         Assert.Equal([1, 2, 3], await service.GetPosterAsync("/x.jpg"));
         Assert.Equal([1, 2, 3], await service.GetPosterAsync("/x.jpg"));
         Assert.Equal(1, client.PosterRequests);
+    }
+
+    [Fact]
+    public async Task Search_UsesTheGivenSearchLanguages()
+    {
+        var client = new FakeClient();
+        client.Searches[("Lupin", "fr-FR")] = [Result(1, "Lupin")];
+
+        var show = Assert.Single(await new TmdbService(client, ["fr-FR"]).SearchAsync("Lupin"));
+
+        Assert.Equal(["fr-FR"], show.Names.Keys);
+        Assert.Equal(1, client.SearchRequests);
+    }
+
+    [Fact]
+    public async Task Languages_FromTheTranslationsWithoutDuplicates()
+    {
+        var client = new FakeClient();
+        client.Translations[7] =
+        [
+            new TvTranslation("en", "US", "English"),
+            new TvTranslation("pt", "BR", "Portuguese"),
+            new TvTranslation("de", "DE", "German"),
+            new TvTranslation("de", "DE", "German"),
+            new TvTranslation("xx", "", null),
+            new TvTranslation(null, "XX", "Invalid"),
+        ];
+
+        var languages = await new TmdbService(client, ["de", "en"]).GetLanguagesAsync(7);
+
+        Assert.Equal(
+            [
+                new TmdbLanguage("en-US", "English"),
+                new TmdbLanguage("pt-BR", "Portuguese"),
+                new TmdbLanguage("de-DE", "German"),
+                new TmdbLanguage("xx", "xx"),
+            ],
+            languages);
+    }
+
+    [Fact]
+    public async Task Languages_CachedAndFailureNotCached()
+    {
+        var client = new FakeClient { Fail = true };
+        client.Translations[7] = [new TvTranslation("en", "US", "English")];
+        var service = new TmdbService(client, ["en"]);
+
+        await Assert.ThrowsAsync<TmdbException>(() => service.GetLanguagesAsync(7));
+        client.Fail = false;
+        Assert.Single(await service.GetLanguagesAsync(7));
+        Assert.Single(await service.GetLanguagesAsync(7));
+
+        Assert.Equal(2, client.TranslationRequests);
     }
 
     [Theory]
@@ -223,7 +286,7 @@ public class TmdbServiceTests
         var show = new Show(1, new Dictionary<string, string> { ["en"] = "Eureka" }, 2006, null, 1);
 
         Assert.Equal("Eureka (2006)", show.DisplayName("en"));
-        Assert.Equal("Eureka (2006)", show.DisplayName("de")); // fallback to another language
+        Assert.Equal("Eureka (2006)", show.DisplayName("de")); // fallback to the first search language
         Assert.Equal("Eureka", (show with { Year = null }).DisplayName("de"));
     }
 }

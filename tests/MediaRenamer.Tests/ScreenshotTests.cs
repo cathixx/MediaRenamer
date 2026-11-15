@@ -50,7 +50,12 @@ public sealed class ScreenshotTests : IDisposable
             new SearchTvResult(2, "Eureka Seven", "2005-04-17", null, 20),
             new SearchTvResult(3, "Eureka!", "1980-01-01", null, 1),
         ];
-        client.Episodes[(1, "en")] =
+        client.Translations[1] =
+        [
+            new TvTranslation("en", "US", "English"), new TvTranslation("de", "DE", "German"),
+            new TvTranslation("fr", "FR", "French"), new TvTranslation("pt", "BR", "Portuguese"),
+        ];
+        client.Episodes[(1, "en-US")] =
         [
             new TvEpisode(1, 1, "Pilot"), new TvEpisode(1, 2, "Many Happy Returns"),
             new TvEpisode(1, 3, "Before I Forget"), new TvEpisode(1, 4, "Dr. Kimbrough"),
@@ -65,11 +70,10 @@ public sealed class ScreenshotTests : IDisposable
             .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
             .SetupWithoutStarting();
 
-        var viewModel = new MainWindowViewModel(new TmdbService(client), new FakeDialogs())
+        var viewModel = new MainWindowViewModel(new TmdbService(client, ["en-US"]), new FakeDialogs(), "en-US")
         {
             SearchDelay = TimeSpan.Zero,
         };
-        viewModel.SelectedLanguage = viewModel.Languages.Single(l => l.Code == "en");
         // the continuations run on the Avalonia dispatcher of this thread, so it must be pumped while waiting
         Wait(viewModel.OpenAsync([show]));
         Wait(viewModel.PendingShow);

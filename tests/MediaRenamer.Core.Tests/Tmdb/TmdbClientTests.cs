@@ -90,6 +90,25 @@ public class TmdbClientTests
     }
 
     [Fact]
+    public async Task GetTranslations()
+    {
+        var (client, handler) = Create("""
+            {"id":4620,"translations":[
+              {"iso_3166_1":"US","iso_639_1":"en","name":"English","english_name":"English",
+               "data":{"name":"","overview":"..."}},
+              {"iso_3166_1":"BR","iso_639_1":"pt","name":"Português","english_name":"Portuguese","data":{}}
+            ]}
+            """);
+
+        var translations = await client.GetTranslationsAsync(4620, TestContext.Current.CancellationToken);
+
+        Assert.Equal([new TvTranslation("en", "US", "English"), new TvTranslation("pt", "BR", "Portuguese")],
+            translations);
+        Assert.Equal("https://api.themoviedb.org/3/tv/4620/translations?api_key=secret-key",
+            Assert.Single(handler.Requests).ToString());
+    }
+
+    [Fact]
     public async Task GetPoster_WithoutApiKey()
     {
         var (client, handler) = Create("image");
