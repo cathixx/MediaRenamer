@@ -481,4 +481,57 @@ public sealed class MainWindowViewModelTests : IDisposable
         Assert.Equal(["a", "b"], vm.Episodes.Select(r => r.OldName));
         Assert.Equal(2, vm.SelectedShow?.Show.Id);
     }
+
+    [Fact]
+    public async Task Reload_ReadsTheFilesAgain_KeepsShowAndLanguage()
+    {
+        var vm = await OpenAsync("Staffel 01/S01E01.mkv", "Staffel 01/x.mkv");
+        vm.SelectedLanguage = vm.Languages.Single(l => l.Code == "en-US");
+        await vm.PendingShow;
+        vm.Episodes[0].IsSelected = false;
+        var searches = _client.SearchRequests;
+
+        // renamed and added by hand
+        File.Move(Path.Combine(_show, "Staffel 01", "x.mkv"), Path.Combine(_show, "Staffel 01", "S01E02 - Many Happy Returns.mkv"));
+        _temp.File("Eureka", "Staffel 02", "S02E01.mkv");
+
+        Assert.True(vm.ReloadCommand.CanExecute(null));
+        await vm.ReloadCommand.ExecuteAsync(null);
+
+        Assert.Equal(
+            [
+                ("S01E01", "S01E01 - Pilot", NewNameState.Changed),
+                ("S01E02 - Many Happy Returns", "S01E02 - Many Happy Returns", NewNameState.Same),
+                ("S02E01", "S02E01 - Phoenix Rising", NewNameState.Changed),
+            ],
+            Rows(vm));
+        Assert.True(vm.Episodes[0].IsSelected);
+        Assert.Equal(EurekaId, vm.SelectedShow?.Show.Id);
+        Assert.Equal("en-US", vm.SelectedLanguage?.Code);
+        Assert.Equal(searches, _client.SearchRequests);
+        Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
+    public async Task Reload_WithoutSeasonsBefore_SearchesTheShow()
+    {
+        var vm = CreateViewModel();
+        await vm.OpenAsync([_show]);
+        Assert.NotNull(vm.FolderMessage);
+        Assert.Null(vm.SelectedShow);
+
+        _temp.File("Eureka", "Staffel 01", "S01E01.mkv");
+        await vm.ReloadCommand.ExecuteAsync(null);
+        await vm.PendingShow;
+
+        Assert.Null(vm.FolderMessage);
+        Assert.Equal(EurekaId, vm.SelectedShow?.Show.Id);
+        Assert.Equal("S01E01 - Pilot DE", vm.Episodes.Single().NewName);
+    }
+
+    [Fact]
+    public void Reload_DisabledBeforeAFolderWasOpened()
+    {
+        Assert.False(CreateViewModel().ReloadCommand.CanExecute(null));
+    }
 }

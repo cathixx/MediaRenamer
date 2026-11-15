@@ -24,6 +24,8 @@ public static class Strings
     public static string Rename => Get(nameof(Rename));
     public static string ChooseFolder => Get(nameof(ChooseFolder));
     public static string ChooseFolderTitle => Get(nameof(ChooseFolderTitle));
+    public static string Reload => Get(nameof(Reload));
+    public static string ReloadToolTip => Get(nameof(ReloadToolTip));
     public static string ColumnNumber => Get(nameof(ColumnNumber));
     public static string ColumnOldName => Get(nameof(ColumnOldName));
     public static string ColumnNewName => Get(nameof(ColumnNewName));

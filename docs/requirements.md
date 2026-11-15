@@ -47,6 +47,7 @@ one or more selected season folders (E-2).
 | E-9 | **Invalid arguments:** if the first argument is a file or does not exist, the application opens with a hint and the user can choose a folder (E-8). In season folder mode, arguments that are not season folders of the same show (no folder, not matching E-3, specials folder, different parent folder) are ignored and a hint names them. |
 | E-10 | If no season folder is found, a hint is shown and the user can choose another folder (E-8). |
 | E-11 | **Command line options** (arguments starting with `--` are never folder paths): `--lang=<culture>` sets the UI language and the start language of the episode titles (T-25), e.g. `--lang=de`, `--lang=fr-FR`; `--theme=light` or `--theme=dark` sets the theme (section 6); `--complete-update=<path>` and `--previous-process=<id>` are used internally by the self-update (UP-4). |
+| E-12 | **Reload:** the button "Reload" reads the folders opened last again (the same arguments or the same chosen folder), e.g. after files or folders were renamed by hand, without restarting the application. The table is built anew (all files selected again, D-8); the selected show and language are kept. If no show was selected yet (e.g. there were no season folders before), the show is searched with the folder name (T-1). Disabled while something is loading or being renamed, and before a folder was opened. |
 
 ## 3. Video files and episode numbers
 
@@ -184,6 +185,7 @@ follows the operating system and can be set with `--lang=<culture>`.
 | right | image | poster of the selected show, at most 400 × 750, aspect ratio kept |
 | bottom | status bar | progress indicator and absolute path of the show folder; on the right `© cathixx   <version>`, the version is `DEVELOP` for local builds |
 | | folder selection | choose or change the show folder (E-8) |
+| | button "Reload" | read the folders again (E-12) |
 
 ### 6.2 Table
 

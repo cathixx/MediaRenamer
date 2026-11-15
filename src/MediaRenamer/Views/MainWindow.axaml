@@ -118,8 +118,12 @@
     <Grid ColumnDefinitions="300,*,Auto" Margin="8">
       <!-- left: folder, search, results, language, rename -->
       <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="8">
-        <Button Grid.Row="0" Content="{x:Static res:Strings.ChooseFolder}" HorizontalAlignment="Stretch"
-                IsEnabled="{Binding IsSearchEnabled}" Click="OnChooseFolder" />
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+          <Button Grid.Column="0" Content="{x:Static res:Strings.ChooseFolder}" HorizontalAlignment="Stretch"
+                  IsEnabled="{Binding IsSearchEnabled}" Click="OnChooseFolder" />
+          <Button Grid.Column="1" Content="{x:Static res:Strings.Reload}" Command="{Binding ReloadCommand}"
+                  ToolTip.Tip="{x:Static res:Strings.ReloadToolTip}" />
+        </Grid>
         <TextBox Grid.Row="1" Text="{Binding SearchTerm}" PlaceholderText="{x:Static res:Strings.SearchPlaceholder}"
                  IsEnabled="{Binding IsSearchEnabled}" />
         <ListBox Grid.Row="2" Classes="results" ItemsSource="{Binding SearchResults}" SelectedItem="{Binding SelectedShow}"

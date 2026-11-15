@@ -42,6 +42,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private Func<Task>? _retry;
     private bool _settingLanguages;
 
+    /// <summary>The paths opened last, read again by <see cref="ReloadCommand"/>.</summary>
+    private IReadOnlyList<string>? _openedPaths;
+
     /// <summary>The language the user wants: initially the start language, then the last selected one (T-25).</summary>
     private string _preferredLanguage;
 
@@ -114,29 +117,29 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsTableEnabled))]
-    [NotifyCanExecuteChangedFor(nameof(RenameCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RenameCommand), nameof(ReloadCommand))]
     public partial bool IsScanning { get; private set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsTableEnabled), nameof(IsResultListEnabled))]
-    [NotifyCanExecuteChangedFor(nameof(RenameCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RenameCommand), nameof(ReloadCommand))]
     public partial bool IsSearching { get; private set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsTableEnabled))]
-    [NotifyCanExecuteChangedFor(nameof(RenameCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RenameCommand), nameof(ReloadCommand))]
     public partial bool IsLoadingShow { get; private set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsTableEnabled), nameof(IsResultListEnabled),
         nameof(IsSearchEnabled))]
-    [NotifyCanExecuteChangedFor(nameof(RenameCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RenameCommand), nameof(ReloadCommand))]
     public partial bool IsRenaming { get; private set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsTableEnabled), nameof(IsResultListEnabled),
         nameof(IsSearchEnabled))]
-    [NotifyCanExecuteChangedFor(nameof(RenameCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RenameCommand), nameof(ReloadCommand))]
     public partial bool IsUpdating { get; private set; }
 
     /// <summary>Shown while an update is installed (UP-4).</summary>
@@ -219,48 +222,102 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>Opens the show given by the start arguments or a chosen folder (section 2).</summary>
     public async Task OpenAsync(IReadOnlyList<string> paths)
     {
+        _openedPaths = paths;
+        ReloadCommand.NotifyCanExecuteChanged();
         IsScanning = true;
         try
         {
-            ShowFolderResult result;
-            IReadOnlyList<EpisodeFile> files;
-            try
+            if (await ScanAsync(paths) is { Problem: ShowFolderProblem.None, ShowPath: { } showPath })
             {
-                (result, files) = await Task.Run(() =>
-                {
-                    var r = ShowFolderResolver.Resolve(paths);
-                    return (r, r.Problem == ShowFolderProblem.None ? EpisodeScanner.Scan(r.Seasons) : []);
-                });
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                FolderMessage = Strings.FolderReadFailed(e.Message);
-                return;
-            }
-            catch (Exception e)
-            {
-                await ShowUnexpectedErrorAsync(e);
-                return;
-            }
-
-            ShowPath = result.ShowPath;
-            FolderMessage = FolderMessageFor(result);
-            SetRows(files);
-
-            if (result.Problem == ShowFolderProblem.None && result.ShowPath is { } showPath)
-            {
-                // T-1: search immediately with the folder name
-                _searchDelay?.Cancel();
-                _settingSearchTerm = true;
-                SearchTerm = Path.GetFileName(showPath);
-                _settingSearchTerm = false;
-                await SearchNowAsync();
+                await SearchFolderNameAsync(showPath);
             }
         }
         finally
         {
             IsScanning = false;
         }
+    }
+
+    private bool CanReload() => !IsBusy && _openedPaths is not null;
+
+    /// <summary>
+    /// Reads the folders opened last again, e.g. after files were renamed by hand (E-12). The selected show and
+    /// language are kept; the episode titles come from the cache.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanReload))]
+    private async Task ReloadAsync()
+    {
+        if (_openedPaths is not { } paths)
+        {
+            return;
+        }
+
+        IsScanning = true;
+        try
+        {
+            var result = await ScanAsync(paths);
+            if (result is null)
+            {
+                return;
+            }
+
+            if (SelectedShow is null && result is { Problem: ShowFolderProblem.None, ShowPath: { } showPath })
+            {
+                // e.g. the folder had no season folders before
+                await SearchFolderNameAsync(showPath);
+            }
+            else
+            {
+                await (PendingShow = LoadShowAsync(loadLanguages: false));
+            }
+        }
+        finally
+        {
+            IsScanning = false;
+        }
+    }
+
+    /// <summary>
+    /// Resolves the show folder and lists its video files (sections 2 and 3). Returns <c>null</c> if the folder could
+    /// not be read; the rows are then unchanged.
+    /// </summary>
+    private async Task<ShowFolderResult?> ScanAsync(IReadOnlyList<string> paths)
+    {
+        ShowFolderResult result;
+        IReadOnlyList<EpisodeFile> files;
+        try
+        {
+            (result, files) = await Task.Run(() =>
+            {
+                var r = ShowFolderResolver.Resolve(paths);
+                return (r, r.Problem == ShowFolderProblem.None ? EpisodeScanner.Scan(r.Seasons) : []);
+            });
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            FolderMessage = Strings.FolderReadFailed(e.Message);
+            return null;
+        }
+        catch (Exception e)
+        {
+            await ShowUnexpectedErrorAsync(e);
+            return null;
+        }
+
+        ShowPath = result.ShowPath;
+        FolderMessage = FolderMessageFor(result);
+        SetRows(files);
+        return result;
+    }
+
+    /// <summary>T-1: searches immediately with the folder name.</summary>
+    private async Task SearchFolderNameAsync(string showPath)
+    {
+        _searchDelay?.Cancel();
+        _settingSearchTerm = true;
+        SearchTerm = Path.GetFileName(showPath);
+        _settingSearchTerm = false;
+        await SearchNowAsync();
     }
 
     partial void OnSearchTermChanged(string value)

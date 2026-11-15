@@ -9,6 +9,8 @@
   <data name="Rename" xml:space="preserve"><value>Umbenennen</value></data>
   <data name="ChooseFolder" xml:space="preserve"><value>Ordner wählen…</value></data>
   <data name="ChooseFolderTitle" xml:space="preserve"><value>Serienordner wählen</value></data>
+  <data name="Reload" xml:space="preserve"><value>Neu laden</value></data>
+  <data name="ReloadToolTip" xml:space="preserve"><value>Die Ordner neu einlesen, z. B. nachdem Dateien von Hand umbenannt wurden</value></data>
   <data name="ColumnNumber" xml:space="preserve"><value>#</value></data>
   <data name="ColumnOldName" xml:space="preserve"><value>Alter Dateiname</value></data>
   <data name="ColumnNewName" xml:space="preserve"><value>Neuer Dateiname</value></data>

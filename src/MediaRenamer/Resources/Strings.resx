@@ -9,6 +9,8 @@
   <data name="Rename" xml:space="preserve"><value>Rename</value></data>
   <data name="ChooseFolder" xml:space="preserve"><value>Choose folder…</value></data>
   <data name="ChooseFolderTitle" xml:space="preserve"><value>Choose the show folder</value></data>
+  <data name="Reload" xml:space="preserve"><value>Reload</value></data>
+  <data name="ReloadToolTip" xml:space="preserve"><value>Read the folders again, e.g. after files were renamed by hand</value></data>
   <data name="ColumnNumber" xml:space="preserve"><value>#</value></data>
   <data name="ColumnOldName" xml:space="preserve"><value>Old file name</value></data>
   <data name="ColumnNewName" xml:space="preserve"><value>New file name</value></data>
