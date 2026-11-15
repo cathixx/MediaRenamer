@@ -50,13 +50,14 @@ public sealed class EpisodeScannerTests : IDisposable
     [Fact]
     public void UnrecognizedFilesFillTheGapsInNameOrder()
     {
-        // ordinal order: upper case before lower case
-        var season = Season(1, "S01E02.mkv", "S01E04.mkv", "b.mkv", "B.mkv", "a.mkv");
+        // ordinal order: upper case before lower case ("C" before "a"); no names differing only in case, since
+        // those are the same file on case-insensitive file systems (Windows, macOS)
+        var season = Season(1, "S01E02.mkv", "S01E04.mkv", "b.mkv", "C.mkv", "a.mkv");
 
         var files = EpisodeScanner.Scan([season]);
 
         Assert.Equal(
-            [("B", 1, false), ("S01E02", 2, true), ("a", 3, false), ("S01E04", 4, true), ("b", 5, false)],
+            [("C", 1, false), ("S01E02", 2, true), ("a", 3, false), ("S01E04", 4, true), ("b", 5, false)],
             files.Select(f => (f.Name, f.Episodes.First, f.IsRecognized)));
     }
 
