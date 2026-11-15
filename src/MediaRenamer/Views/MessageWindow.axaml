@@ -16,7 +16,9 @@
     </StackPanel>
     <StackPanel Spacing="8">
       <TextBlock x:Name="HeaderText" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap" />
-      <SelectableTextBlock x:Name="MessageText" TextWrapping="Wrap" MaxHeight="400" />
+      <ScrollViewer MaxHeight="400" HorizontalScrollBarVisibility="Disabled">
+        <SelectableTextBlock x:Name="MessageText" TextWrapping="Wrap" />
+      </ScrollViewer>
     </StackPanel>
   </DockPanel>
 </Window>

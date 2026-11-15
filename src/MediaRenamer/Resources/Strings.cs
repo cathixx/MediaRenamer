@@ -56,4 +56,6 @@ public static class Strings
     public static string Updating(string version) => Format("UpdatingFormat", version);
     public static string UpdateFailedHeader => Get(nameof(UpdateFailedHeader));
     public static string UpdateFailed(string error, string releaseUrl) => Format("UpdateFailedFormat", error, releaseUrl);
+    public static string UpdateInstalledHeader => Get(nameof(UpdateInstalledHeader));
+    public static string UpdateInstalledRestartFailed(string details) => Format("UpdateInstalledRestartFailedFormat", details);
 }

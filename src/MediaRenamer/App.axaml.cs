@@ -49,7 +49,18 @@ public partial class App : Application
                     var executable = Environment.ProcessPath;
                     if (await viewModel.CheckForUpdateAsync(AppInfo.ReleaseVersion, executable))
                     {
-                        Restart(executable!);
+                        try
+                        {
+                            Restart(executable!);
+                        }
+                        catch (Exception e)
+                        {
+                            // the new version is installed, it is just not started automatically
+                            Console.Error.WriteLine(e);
+                            await new DialogService(window).ShowErrorAsync(Strings.UpdateInstalledHeader,
+                                Strings.UpdateInstalledRestartFailed(MainWindowViewModel.ErrorDetails(e)));
+                        }
+
                         desktop.Shutdown();
                     }
                 };

@@ -79,6 +79,30 @@ public class UpdateTests
     }
 
     [Fact]
+    public async Task UnexpectedErrorWhileInstalling_ShowsDetailsAndContinues()
+    {
+        _dialogs.Confirm = true;
+        _updates.InstallException = new InvalidOperationException("");
+        var vm = CreateViewModel();
+
+        var restart = await vm.CheckForUpdateAsync(new Version(1, 1, 0), Executable);
+
+        Assert.False(restart);
+        var error = Assert.Single(_dialogs.Errors);
+        Assert.Contains(nameof(InvalidOperationException), error.Text, StringComparison.Ordinal);
+        Assert.False(vm.IsUpdating);
+    }
+
+    [Fact]
+    public void ErrorDetails_ContainTypeEvenWithoutMessage()
+    {
+        Assert.Contains("System.InvalidOperationException", MainWindowViewModel.ErrorDetails(new InvalidOperationException("")),
+            StringComparison.Ordinal);
+        Assert.StartsWith("broken", MainWindowViewModel.ErrorDetails(new InvalidOperationException("broken")),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task InstallFails_ShowsErrorWithReleasePageAndContinues()
     {
         _dialogs.Confirm = true;

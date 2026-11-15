@@ -193,10 +193,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             await _updates.InstallAsync(update, executablePath);
             return true;
         }
-        catch (UpdateException e)
+        catch (Exception e)
         {
+            // every error while installing (not only the expected ones) keeps the current version running
             Console.Error.WriteLine(e);
-            await _dialogs.ShowErrorAsync(Strings.UpdateFailedHeader, Strings.UpdateFailed(e.Message, update.ReleaseUrl));
+            var details = e is UpdateException { InnerException: null } ? e.Message : ErrorDetails(e);
+            await _dialogs.ShowErrorAsync(Strings.UpdateFailedHeader, Strings.UpdateFailed(details, update.ReleaseUrl));
             return false;
         }
         finally
@@ -609,8 +611,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     internal Task ShowUnexpectedErrorAsync(Exception e)
     {
         Console.Error.WriteLine(e);
-        return _dialogs.ShowErrorAsync(Strings.UnexpectedError, e.Message);
+        return _dialogs.ShowErrorAsync(Strings.UnexpectedError, ErrorDetails(e));
     }
+
+    /// <summary>
+    /// Message, type and stack trace of an unexpected error, so it can be reported (the message alone may be empty).
+    /// </summary>
+    internal static string ErrorDetails(Exception e) =>
+        string.IsNullOrWhiteSpace(e.Message) ? e.ToString() : $"{e.Message}\n\n{e}";
 
     private static string? FolderMessageFor(ShowFolderResult result)
     {

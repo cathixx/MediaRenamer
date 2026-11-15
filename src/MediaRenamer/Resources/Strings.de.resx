@@ -42,4 +42,8 @@
   <data name="UpdateFailedHeader" xml:space="preserve"><value>Das Update ist fehlgeschlagen</value></data>
   <data name="UpdateFailedFormat" xml:space="preserve"><value>{0}
 Die aktuelle Version läuft weiter. Die neue Version kann hier heruntergeladen werden: {1}</value></data>
+  <data name="UpdateInstalledHeader" xml:space="preserve"><value>Das Update wurde installiert</value></data>
+  <data name="UpdateInstalledRestartFailedFormat" xml:space="preserve"><value>Die neue Version konnte nicht automatisch gestartet werden. Bitte die Anwendung neu starten.
+
+{0}</value></data>
 </root>

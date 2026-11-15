@@ -13,6 +13,27 @@ public sealed class UpdateIntegrationTests : IDisposable
     public void Dispose() => _temp.Dispose();
 
     [Fact(Explicit = true)]
+    public async Task InstallsTheLatestWindowsRelease()
+    {
+        var service = new UpdateService(new HttpClient(), UpdateService.AssetNameFor("win-x64"),
+            UpdateService.ExecutableNameFor("win-x64"));
+        var update = await service.CheckAsync(new Version(0, 0, 1), TestContext.Current.CancellationToken);
+        Assert.NotNull(update);
+
+        var executable = _temp.File("app", "MediaRenamer.exe");
+        await service.InstallAsync(update, executable, TestContext.Current.CancellationToken);
+
+        // the installed file is the Windows executable (PE, "MZ") of the release
+        var header = new byte[2];
+        await using (var file = File.OpenRead(executable))
+        {
+            await file.ReadExactlyAsync(header, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal("MZ"u8.ToArray(), header);
+    }
+
+    [Fact(Explicit = true)]
     public async Task FindsAndInstallsTheLatestRelease()
     {
         var service = new UpdateService(new HttpClient(), UpdateService.AssetNameFor("linux-x64"),

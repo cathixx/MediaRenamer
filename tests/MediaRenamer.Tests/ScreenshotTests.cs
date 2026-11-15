@@ -115,6 +115,12 @@ public sealed class ScreenshotTests : IDisposable
         window.CaptureRenderedFrame()!.Save(Path.Combine(output, "main-window-languages-dark.png"),
             new PngBitmapEncoderOptions());
         languages.IsDropDownOpen = false;
+        var darkMessage = new MessageWindow("An unexpected error occurred", "Some error message");
+        darkMessage.Show();
+        Dispatcher.UIThread.RunJobs();
+        darkMessage.CaptureRenderedFrame()!.Save(Path.Combine(output, "message-window-dark.png"),
+            new PngBitmapEncoderOptions());
+        darkMessage.Close();
         Application.Current.RequestedThemeVariant = ThemeVariant.Light;
         Dispatcher.UIThread.RunJobs();
 
