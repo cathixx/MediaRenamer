@@ -2,6 +2,7 @@ name: Build & Release
 
 # Pull requests: build only, the executables are attached to the run as artifacts.
 # Push to main: build with the next version number, then create the tag and a GitHub release with the executables.
+# Dependabot pull requests: merged automatically if everything is green, then released (job dependabot-merge).
 on:
   push:
     branches: [ main ]
@@ -175,3 +176,48 @@ jobs:
           generate_release_notes: true
           files: dist/*
           fail_on_unmatched_files: true
+
+  # Dependabot updates are merged automatically when all builds and tests passed. "Squash and merge" because GitHub
+  # signs that commit and the history stays linear. A merge with the GITHUB_TOKEN does not trigger the push event, so
+  # the release is started explicitly via workflow_dispatch (the only event the GITHUB_TOKEN may trigger), unless the
+  # update only changes files that don't create a release on push (see paths-ignore above, e.g. GitHub Actions).
+  dependabot-merge:
+    name: Merge Dependabot update
+    needs: build
+    # only runs started by Dependabot itself, not by someone pushing to its branch
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.user.login == 'dependabot[bot]'
+      && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: write       # merge
+      pull-requests: write  # merge
+      actions: write        # start the release
+
+    steps:
+      - name: Merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        # --match-head-commit: only the tested state is merged, not a commit pushed in the meantime
+        run: gh pr merge "$PR" --squash --delete-branch --match-head-commit "$HEAD_SHA"
+
+      - name: Start release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          relevant=$(gh pr diff "$PR" --name-only | grep -vE '\.md$|^LICENSE$|^\.idea/|^\.github/' || true)
+          if [ -z "$relevant" ]; then
+            echo "Only files that don't affect the executable changed, no release"
+            exit 0
+          fi
+          echo "Changed files that affect the executable:"
+          echo "$relevant"
+          gh workflow run build.yml --ref main

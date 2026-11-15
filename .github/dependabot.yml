@@ -2,6 +2,8 @@ version: 2
 
 # All updates (.NET SDK, NuGet packages and GitHub Actions, including major versions) are combined into one weekly pull request
 # with a single commit, so dependency updates create as few commits as possible.
+# If all builds and tests pass, the pull request is merged and released automatically (job dependabot-merge in
+# .github/workflows/build.yml).
 multi-ecosystem-groups:
   all-dependencies:
     schedule:

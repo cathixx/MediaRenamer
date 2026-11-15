@@ -261,6 +261,7 @@ follows the operating system and can be set with `--lang=<culture>`.
 | Configuration | none. Nothing is stored: no settings, no window state, no history. |
 | Logging | console; every rename is logged as `rename 'old' -> 'new'` |
 | Versioning | every push to `main` creates a release with the next version number (patch; `#minor`/`#major` in the commit message) |
+| Dependency updates | Dependabot proposes all updates once a week in one pull request. If all builds and tests pass, it is merged automatically and released like a push to `main`; updates that only change GitHub Actions are merged without a release. |
 
 Not supported, among others: movies (only TV shows), data sources other than TMDB, moving files or creating folders,
 renaming companion files (subtitles, `.nfo`), a configurable name format, manually editing the new name or the episode

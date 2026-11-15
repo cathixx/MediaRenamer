@@ -54,6 +54,9 @@ Notes for AI agents working in this repository.
   `System.Diagnostics.Process`). The downloaded `<name>.new` completes the update (`--complete-update=`, see
   `UpdateArguments` and `Program.Main`); keep these options supported in all future versions.
 - Dependabot (`.github/dependabot.yml`) combines all .NET SDK, NuGet and GitHub Actions updates into one weekly pull request.
+  If all builds and tests pass, the job `dependabot-merge` in `.github/workflows/build.yml` merges it ("Squash and
+  merge") and starts the release via workflow_dispatch (a merge with the `GITHUB_TOKEN` does not trigger the push
+  event). Updates that only change `.github/` are merged without a release. Failing updates stay open.
 - **Application icon:** `src/MediaRenamer/Assets/icon.svg`, `icon.ico` and `icon-256.png` are generated from the
   vector description in `tests/MediaRenamer.Tests/IconGenerator.cs`; never edit them directly. After changing the icon:
   `SCREENSHOT_DIR=/tmp/shots dotnet test --project tests/MediaRenamer.Tests -- --explicit only --filter-class *IconGenerator`
