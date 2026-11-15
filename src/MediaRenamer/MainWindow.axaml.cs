@@ -1,0 +1,20 @@
+using System.Globalization;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using MediaRenamer.Resources;
+
+namespace MediaRenamer;
+
+public partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+        var folders = Program.FolderArguments;
+        var status = folders.Count == 0 ? Strings.NoFoldersPassed : Strings.Arguments(string.Join(", ", folders));
+        StatusText.Text = $"{status}  |  {Strings.CurrentLanguage(CultureInfo.CurrentUICulture.Name)}";
+    }
+
+    private void OnHelloClick(object? sender, RoutedEventArgs e) =>
+        ResultText.Text = Strings.SearchedFor(SearchBox.Text ?? string.Empty);
+}

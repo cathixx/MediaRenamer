@@ -14,3 +14,7 @@
 
 ### local secrets ###
 .env
+
+# .NET
+obj/
+[Bb]in/
