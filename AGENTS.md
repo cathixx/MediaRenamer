@@ -51,7 +51,7 @@ Notes for AI agents working in this repository.
 - In the sandbox the .NET SDK is installed in `~/.dotnet` but is not on the `PATH`:
   `export PATH=$HOME/.dotnet:$PATH`. There is no display, so the UI can be built but not started there.
 - All text files use LF line endings.
-- Never commit the TMDB API key and never print it.
+- TMDB API key: locally in `.env` (ignored by git, template `.env.example`). Never commit the key and never print it.
 
 ## Git
 
