@@ -101,8 +101,9 @@ Notes for AI agents working in this repository.
 ## Git
 
 - Changes may be **committed** without asking.
-- **Push only with explicit approval**, renewed for every single push. An earlier approval does not apply to later pushes.
-  This also covers force pushes, tags and anything else that changes the state on GitHub.
+- **Agents never push.** Pushing is always done by the maintainer, also when asked "push?" or after an approval in an
+  earlier conversation. This also covers force pushes, tags, merging pull requests on GitHub and anything else that
+  changes the state on GitHub. Leave the commits local and tell the maintainer which commits are ready to be pushed.
 - Reason: every push to `main` automatically creates a public GitHub release via the workflow `Build & Release`.
 - `#minor` or `#major` in a commit message increases the release version accordingly (default: patch).
   Only use these keywords when explicitly requested.
@@ -111,17 +112,16 @@ Notes for AI agents working in this repository.
 
 - **Commits:** Every change may be committed directly without asking.
   Stage only the files that belong to the change (no pure line-ending changes).
-- **Push:** Never push without explicit approval. The approval applies only to the
-  specific push, not to later ones.
+- **Push:** Never push (see above); the maintainer pushes.
 - **Amend:** If two thematically related changes are requested right after each other and the previous commit
   has not been pushed yet, fold the second change into it with `git commit --amend` instead of creating a new commit.
   Verify beforehand that the commit is really local (e.g. `git status` / `git log origin/main..HEAD`).
   Never amend commits that have already been pushed.
 - **Linear history, no merge commits:** PRs are taken over by fast-forward
-  (`git fetch && git merge --ff-only origin/<pr-branch>`, then push). If a fast-forward is not possible,
+  (`git fetch && git merge --ff-only origin/<pr-branch>`, then the maintainer pushes). If a fast-forward is not possible,
   rebase the PR branch first.
   Dependabot only rebases its PRs on conflicts, and for grouped multi-ecosystem PRs it did not react to
-  `@dependabot rebase`. In that case merge the PR on GitHub with **"Squash and merge"**: GitHub signs that commit,
+  `@dependabot rebase`. In that case the maintainer merges the PR on GitHub with **"Squash and merge"**: GitHub signs that commit,
   whereas commits created by "Rebase and merge" (and "Update with rebase") are unsigned.
 - **Lost objects in the sandbox:** occasionally `git commit` fails with `invalid object ... Error building trees`: an
   object written by `git add` did not arrive on the mounted workspace, and `git add` does not write it again. Fix:
